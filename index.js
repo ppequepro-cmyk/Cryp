@@ -3,18 +3,57 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, isOwner } from './src/config.js';
 import { askAI } from './src/ai.js';
-import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard } from './src/messages.js';
+import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
 const cooldowns = new Map();
 const stats = { received: 0, answered: 0, startedAt: Date.now() };
 
-function allowedByCooldown(jid) {
+function allowedByCooldown(sender) {
   const now = Date.now();
-  const last = cooldowns.get(jid) || 0;
+  const last = cooldowns.get(sender) || 0;
   if (now - last < 3500) return false;
-  cooldowns.set(jid, now);
+  cooldowns.set(sender, now);
   return true;
+}
+
+async function sendText(sock, jid, msg, text) {
+  await sock.sendMessage(jid, { text }, { quoted: msg });
+}
+
+async function handleCommand(sock, jid, msg, text, sender, owner) {
+  const command = text.trim().toLowerCase();
+
+  if (command === '!ayuda') {
+    await sendText(sock, jid, msg, helpMessage());
+    return true;
+  }
+  if (command === '!menu' || command === 'menu') {
+    await sendText(sock, jid, msg, `🌐 Menú de NORE: ${config.menuUrl}`);
+    return true;
+  }
+  if (command === '!creador' || isCreatorQuestion(text)) {
+    await sendText(sock, jid, msg, creatorCard());
+    return true;
+  }
+  if (command === '!horario') {
+    await sendText(sock, jid, msg, '🗓️ Todavía no hay un horario del salón configurado. Cuando se cargue, podrás consultarlo aquí.');
+    return true;
+  }
+  if (command === '!tareas') {
+    await sendText(sock, jid, msg, '📚 Todavía no hay tareas registradas. Cuando se active el registro del salón, aquí aparecerán las pendientes.');
+    return true;
+  }
+  if (command === '!recordar') {
+    await sendText(sock, jid, msg, '⏰ La función para guardar y enviar recordatorios todavía está en desarrollo. No quiero fingir que guardé algo cuando aún no puedo hacerlo.');
+    return true;
+  }
+  if (owner && command === '!stats') {
+    const uptime = Math.floor((Date.now() - stats.startedAt) / 1000);
+    await sendText(sock, jid, msg, `📊 *NORE*\nMensajes recibidos: ${stats.received}\nRespuestas: ${stats.answered}\nActivo: ${uptime}s`);
+    return true;
+  }
+  return false;
 }
 
 async function start() {
@@ -61,37 +100,22 @@ async function start() {
       const sender = group ? msg.key.participant : jid;
       const owner = isOwner(sender);
 
-      if (isCreatorQuestion(text) || /^!creador$/i.test(text)) {
-        await sock.sendMessage(jid, { text: creatorCard() }, { quoted: msg });
-        stats.answered++;
-        continue;
-      }
+      if (await handleCommand(sock, jid, msg, text, sender, owner)) continue;
 
-      // Owner-only starter admin commands. Group-wide announcement requires owner.
-      if (owner && /^!stats$/i.test(text)) {
-        const uptime = Math.floor((Date.now() - stats.startedAt) / 1000);
-        await sock.sendMessage(jid, { text: `📊 *NORE*\\nMensajes recibidos: ${stats.received}\\nRespuestas: ${stats.answered}\\nActivo: ${uptime}s` }, { quoted: msg });
-        continue;
-      }
-      if (/^(?:!menu|menu)$/i.test(text)) {
-        await sock.sendMessage(jid, { text: `🌐 Menú de NORE: ${config.menuUrl}` }, { quoted: msg });
-        continue;
-      }
-
-      // Private chat is free-form. Groups require a trigger or a mention.
+      // Privado: conversación libre. Grupo: solo responde si lo llaman.
       if (group && !isBotMentioned(msg, text, sock.user?.id)) continue;
       if (!allowedByCooldown(sender || jid)) continue;
 
       try {
         await sock.sendMessage(jid, { react: { text: '⏳', key: msg.key } });
-        const name = msg.pushName || 'Usuario';
+        const name = msg.pushName || 'Compañero';
         const answer = await askAI(sender || jid, text, name);
-        await sock.sendMessage(jid, { text: answer }, { quoted: msg });
+        await sendText(sock, jid, msg, answer);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
       } catch (error) {
         console.error('Error al responder:', error.message);
-        await sock.sendMessage(jid, { text: 'No pude completar eso ahora. Inténtalo de nuevo más tarde.' }, { quoted: msg });
+        await sendText(sock, jid, msg, 'No pude completar eso ahora. Inténtalo de nuevo más tarde.');
       }
     }
   });
