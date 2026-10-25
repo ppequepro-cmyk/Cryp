@@ -15,6 +15,6 @@ export const config = {
 };
 
 export function isOwner(jid = '') {
-  const number = String(jid).split('@')[0].replace(/\D/g, '');
+  const number = String(jid).replace(/:\d+@/, '@').split('@')[0].replace(/\D/g, '');
   return Boolean(config.ownerNumber && number === config.ownerNumber);
 }
