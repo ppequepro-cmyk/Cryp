@@ -101,7 +101,7 @@ function trackFromItem(item) {
 async function searchArchive(query, ctx) {
   // IA usa sintaxis Lucene. Evitamos comillas/paréntesis aportados por el usuario
   // para no convertir una búsqueda normal en una consulta mal formada.
-  const terms = query.normalize("NFKC").replace(/[^\\p{L}\\p{N} _-]/gu, " ").trim();
+  const terms = query.normalize("NFKC").replace(/[^\p{L}\p{N} _-]/gu, " ").trim();
   const params = new URLSearchParams();
   params.set("q", `mediatype:audio AND title:(${terms})`);
   for (const field of ["identifier", "title", "creator", "collection", "runtime", "licenseurl"]) {
