@@ -1,5 +1,5 @@
 import PDFDocument from 'pdfkit';
-import pdfParse from 'pdf-parse';
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_CHARS = 30000;
@@ -7,8 +7,19 @@ const MAX_TEXT_CHARS = 30000;
 export async function readPdf(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) throw new Error('El PDF está vacío.');
   if (buffer.length > MAX_PDF_BYTES) throw new Error('El PDF supera el límite de 10 MB.');
-  const result = await pdfParse(buffer);
-  const text = String(result.text || '').replace(/\\u0000/g, '').trim();
+  const loadingTask = getDocument({ data: new Uint8Array(buffer), useSystemFonts: true });
+  const pdf = await loadingTask.promise;
+  const pages = [];
+  try {
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(item => item.str || '').join(' '));
+    }
+  } finally {
+    await pdf.destroy();
+  }
+  const text = pages.join('\n').replace(/\\u0000/g, '').trim();
   if (!text) throw new Error('No pude extraer texto. Puede ser un PDF escaneado o protegido.');
   return text.slice(0, MAX_TEXT_CHARS);
 }
