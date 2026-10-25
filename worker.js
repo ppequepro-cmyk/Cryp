@@ -98,31 +98,57 @@ function trackFromItem(item) {
   };
 }
 
+function normalizeMusicText(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .replace(/[^\\p{L}\\p{N}]+/gu, " ")
+    .trim();
+}
+
 async function searchMusicMetadata(query, ctx) {
-  const terms = query.normalize("NFKC").replace(/[\\\\"]/g, " ").trim();
+  const terms = query.normalize("NFKC").replace(/[\\\\\\"]/g, " ").trim();
+  const normalizedQuery = normalizeMusicText(terms);
   const params = new URLSearchParams();
-  params.set("query", `artist:"${terms}" OR release:"${terms}" OR recording:"${terms}"`);
+  // No buscamos por recording: ese campo provocaba coincidencias irrelevantes.
+  params.set("query", `artist:"${terms}" OR release:"${terms}"`);
   params.set("fmt", "json");
-  params.set("limit", "25");
+  params.set("limit", "50");
   const response = await cachedFetch(`https://musicbrainz.org/ws/2/release/?${params}`, ctx, 3600);
   if (!response.ok) throw new Error(`MusicBrainz respondió HTTP ${response.status}`);
   const payload = await response.json();
-  return (payload.releases || []).map(item => {
+
+  const candidates = (payload.releases || []).map(item => {
     const credit = (item["artist-credit"] || []).map(part => typeof part === "string" ? part : (part.name || part.artist?.name || "")).join("");
+    const title = item.title || "Álbum sin título";
+    const artistNorm = normalizeMusicText(credit);
+    const titleNorm = normalizeMusicText(title);
+    const artistMatch = artistNorm === normalizedQuery ? 100 : artistNorm.includes(normalizedQuery) ? 80 : 0;
+    const titleMatch = titleNorm === normalizedQuery ? 95 : titleNorm.includes(normalizedQuery) ? 75 : 0;
+    const score = Math.max(artistMatch, titleMatch);
+    if (!score) return null;
+
     const groupId = item["release-group"]?.id || "";
     return {
-      id: item.id,
-      title: item.title || "Álbum sin título",
-      artist: credit || "Artista desconocido",
-      date: item.date || "",
-      country: item.country || "",
-      releaseGroupId: groupId,
-      artworkURL: groupId ? `https://coverartarchive.org/release-group/${groupId}/front-250` : "",
-      provider: "MusicBrainz",
-      metadataOnly: true,
-      url: `https://musicbrainz.org/release/${item.id}`
+      score,
+      release: {
+        id: item.id,
+        title,
+        artist: credit || "Artista desconocido",
+        date: item.date || "",
+        country: item.country || "",
+        releaseGroupId: groupId,
+        artworkURL: groupId ? `https://coverartarchive.org/release-group/${groupId}/front-250` : "",
+        provider: "MusicBrainz",
+        metadataOnly: true,
+        url: `https://musicbrainz.org/release/${item.id}`
+      }
     };
-  });
+  }).filter(Boolean);
+
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates.slice(0, 25).map(item => item.release);
 }
 
 async function searchArchive(query, ctx) {
