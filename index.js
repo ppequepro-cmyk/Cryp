@@ -206,7 +206,16 @@ async function start() {
         }
         let prompt = text;
         if (isPdf) {
-          const declaredSize = Number(documentMessage.fileLength || 0);\n          if (declaredSize > 10 * 1024 * 1024) {\n            await sendText(sock, jid, msg, 'El PDF supera el límite de 10 MB.');\n            continue;\n          }\n          const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });\n          const extractedText = await readPdf(pdfBuffer);\n          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;\n        }\n        const answer = await askAI(sender || jid, prompt, name, image);
+          const declaredSize = Number(documentMessage.fileLength || 0);
+          if (declaredSize > 10 * 1024 * 1024) {
+            await sendText(sock, jid, msg, 'El PDF supera el límite de 10 MB.');
+            continue;
+          }
+          const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
+          const extractedText = await readPdf(pdfBuffer);
+          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;
+        }
+        const answer = await askAI(sender || jid, prompt, name, image);
         await sendText(sock, jid, msg, answer);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
