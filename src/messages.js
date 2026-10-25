@@ -15,15 +15,15 @@ export function isGroup(jid = '') {
 }
 
 export function isCreatorQuestion(text = '') {
-  return /\\b(creador|dueñ[oa]|owner)\\b/i.test(text);
+  return /\b(creador|dueñ[oa]|owner)\b/i.test(text);
 }
 
 export function isBotMentioned(message = {}, text = '', botJid = '') {
   const mentioned = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-  const normalize = jid => String(jid).replace(/:\\d+@/, '@');
+  const normalize = jid => String(jid).replace(/:\d+@/, '@');
   const normalizedBot = normalize(botJid);
   const hasMention = Boolean(botJid) && mentioned.some(jid => normalize(jid) === normalizedBot);
-  const hasTriggerWord = /\\bnore\\b/i.test(text);
+  const hasTriggerWord = /\bnore\b/i.test(text);
   return hasMention || hasTriggerWord;
 }
 
