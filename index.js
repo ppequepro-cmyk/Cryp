@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, downloadMediaMessage } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, isOwner } from './src/config.js';
@@ -92,8 +92,10 @@ async function start() {
       if (!msg.message || msg.key.fromMe) continue;
       const jid = msg.key.remoteJid;
       if (!jid || jid === 'status@broadcast') continue;
-      const text = getText(msg);
-      if (!text) continue;
+      const imageMessage = msg.message.imageMessage;
+      const hasImage = Boolean(imageMessage);
+      const text = getText(msg) || (hasImage ? 'Analiza esta imagen y ayúdame a entenderla.' : '');
+      if (!text && !hasImage) continue;
       stats.received++;
 
       const group = isGroup(jid);
@@ -109,7 +111,31 @@ async function start() {
       try {
         await sock.sendMessage(jid, { react: { text: '⏳', key: msg.key } });
         const name = msg.pushName || 'Compañero';
-        const answer = await askAI(sender || jid, text, name);
+        let image = null;
+        if (hasImage) {
+          const declaredSize = Number(imageMessage.fileLength || 0);
+          if (declaredSize > 20 * 1024 * 1024) {
+            await sendText(sock, jid, msg, 'La imagen supera el límite de 20 MB que admite el servicio de análisis visual.');
+            continue;
+          }
+          const buffer = await downloadMediaMessage(msg, 'buffer', {}, {
+            logger,
+            reuploadRequest: sock.updateMediaMessage
+          });
+          if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+            throw new Error('No se pudo descargar la imagen de WhatsApp');
+          }
+          if (buffer.length > 20 * 1024 * 1024) {
+            await sendText(sock, jid, msg, 'La imagen supera el límite de 20 MB que admite el servicio de análisis visual.');
+            continue;
+          }
+          const mimeType = String(imageMessage.mimetype || 'image/jpeg').split(';')[0];
+          if (!mimeType.startsWith('image/')) {
+            throw new Error('El archivo recibido no tiene un formato de imagen válido');
+          }
+          image = { mimeType, base64: buffer.toString('base64') };
+        }
+        const answer = await askAI(sender || jid, text, name, image);
         await sendText(sock, jid, msg, answer);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
