@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "NORE: mini bot de WhatsApp con IA y menú web",
+  "description": "NORE: mini IA de apoyo escolar para WhatsApp",
   "scripts": {
     "start": "node index.js",
-    "check": "node --check index.js && node --check src/config.js && node --check src/ai.js && node --check src/messages.js"
+    "check": "node --check index.js && node --check src/config.js && node --check src/ai.js && node --check src/messages.js && node --test"
   },
   "engines": { "node": ">=20" },
   "dependencies": {
