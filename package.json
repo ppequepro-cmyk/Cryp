@@ -18,6 +18,6 @@
     "pdfkit": "^0.17.2",
     "pino": "^9.6.0",
     "qrcode-terminal": "^0.12.0",
-    "pdfjs-dist": "^5.4.394"
+    "pdfjs-dist": "6.2.108"
   }
 }
