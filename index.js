@@ -165,9 +165,11 @@ async function start() {
       const jid = msg.key.remoteJid;
       if (!jid || jid === 'status@broadcast') continue;
       const imageMessage = msg.message.imageMessage;
+      const documentMessage = msg.message.documentMessage;
       const hasImage = Boolean(imageMessage);
-      const text = getText(msg) || (hasImage ? 'Analiza esta imagen y ayúdame a entenderla.' : '');
-      if (!text && !hasImage) continue;
+      const isPdf = Boolean(documentMessage && (documentMessage.mimetype === 'application/pdf' || String(documentMessage.fileName || '').toLowerCase().endsWith('.pdf')));
+      const text = getText(msg) || (hasImage ? 'Analiza esta imagen y ayúdame a entenderla.' : '') || (isPdf ? 'Lee este PDF y dame un resumen claro, identifica sus temas principales y responde según su contenido.' : '');
+      if (!text && !hasImage && !isPdf) continue;
       stats.received++;
 
       const group = isGroup(jid);
