@@ -99,20 +99,30 @@ function trackFromItem(item) {
 }
 
 async function searchArchive(query, ctx) {
-  const params = new URLSearchParams({
-    q: `mediatype:audio AND title:("${query.replace(/["\\\\]/g, " ")}")`,
-    fl: "identifier,title,creator,collection,runtime,licenseurl",
-    rows: "30",
-    page: "1",
-    output: "json"
-  });
+  // IA usa sintaxis Lucene. Evitamos comillas/paréntesis aportados por el usuario
+  // para no convertir una búsqueda normal en una consulta mal formada.
+  const terms = query.normalize("NFKC").replace(/[^\\p{L}\\p{N} _-]/gu, " ").trim();
+  const params = new URLSearchParams();
+  params.set("q", `mediatype:audio AND title:(${terms})`);
+  for (const field of ["identifier", "title", "creator", "collection", "runtime", "licenseurl"]) {
+    params.append("fl[]", field);
+  }
+  params.set("rows", "50");
+  params.set("page", "1");
+  params.set("output", "json");
+
   const response = await cachedFetch(`${ARCHIVE_SEARCH}?${params}`, ctx, 300);
   if (!response.ok) throw new Error(`Internet Archive Search HTTP ${response.status}`);
   const payload = await response.json();
   const docs = payload?.response?.docs || [];
-  return docs
+  const licensedDocs = docs
     .filter(item => safeId(String(item.identifier || "")) && licensed(item))
     .slice(0, 20);
+  return {
+    docs: licensedDocs,
+    totalFound: Number(payload?.response?.numFound || 0),
+    checked: docs.length
+  };
 }
 
 export default {
@@ -153,8 +163,8 @@ export default {
         return json({ error: "La búsqueda debe tener entre 2 y 100 caracteres." }, 400, origin);
       }
       try {
-        const docs = await searchArchive(query, ctx);
-        const tracks = docs.map(trackFromItem);
+        const resultSet = await searchArchive(query, ctx);
+        const tracks = resultSet.docs.map(trackFromItem);
         if (url.pathname === "/api/search") {
           return json({
             items: tracks.map(track => ({
