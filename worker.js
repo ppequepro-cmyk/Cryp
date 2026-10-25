@@ -196,7 +196,7 @@ async function searchArchive(query, ctx) {
   for (const field of ["identifier", "title", "creator", "album", "collection", "subject", "description", "genre", "date", "year", "runtime", "licenseurl"]) {
     params.append("fl[]", field);
   }
-  params.set("rows", "100");
+  params.set("rows", "200");
   params.set("page", "1");
   params.set("output", "json");
 
@@ -205,8 +205,7 @@ async function searchArchive(query, ctx) {
   const payload = await response.json();
   const docs = payload?.response?.docs || [];
   const licensedDocs = docs
-    .filter(item => safeId(String(item.identifier || "")) && licensed(item))
-    .slice(0, 60);
+    .filter(item => safeId(String(item.identifier || "")) && licensed(item));
   return {
     docs: licensedDocs,
     totalFound: Number(payload?.response?.numFound || 0),
@@ -247,6 +246,42 @@ export default {
     }
 
     const query = (url.searchParams.get("q") || "").trim();
+
+async function searchITunesTracks(query, ctx) {
+  const params = new URLSearchParams({
+    term: query,
+    country: "MX",
+    media: "music",
+    entity: "song",
+    limit: "200"
+  });
+  const response = await cachedFetch("https://itunes.apple.com/search?" + params, ctx, 1800);
+  if (!response.ok) throw new Error(`iTunes respondió HTTP ${response.status}`);
+  const payload = await response.json();
+  return (payload.results || []).filter(item => item.trackId && item.trackName).map(item => ({
+    id: "itunes:" + item.trackId,
+    title: item.trackName,
+    artist: item.artistName || "Artista desconocido",
+    album: item.collectionName || "",
+    duration: Number(item.trackTimeMillis) ? Math.round(item.trackTimeMillis / 1000) : 0,
+    artworkURL: item.artworkUrl100 || "",
+    previewUrl: item.previewUrl || "",
+    previewOnly: true,
+    provider: "Apple/iTunes",
+    storeUrl: item.trackViewUrl || item.collectionViewUrl || ""
+  }));
+}
+
+    if (url.pathname === "/catalog/tracks") {
+      if (query.length < 2 || query.length > 100) return json({ error: "La búsqueda debe tener entre 2 y 100 caracteres." }, 400, origin);
+      try {
+        const tracks = await searchITunesTracks(query, ctx);
+        return json({ provider: "Apple/iTunes", tracks, totalFound: tracks.length }, 200, origin, { "Cache-Control": "public, max-age=1800" });
+      } catch (error) {
+        return json({ error: "No se pudo consultar el catálogo de canciones.", detail: String(error?.message || error).slice(0, 160) }, 502, origin);
+      }
+    }
+
     if (url.pathname === "/catalog/search") {
       if (query.length < 2 || query.length > 100) return json({ error: "La búsqueda debe tener entre 2 y 100 caracteres." }, 400, origin);
       try {
