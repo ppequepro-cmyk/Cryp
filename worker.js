@@ -98,6 +98,38 @@ function trackFromItem(item) {
   };
 }
 
+async function fetchMusicBrainz(url, ctx) {
+  const cache = caches.default;
+  const key = new Request(url, { method: "GET" });
+  const cached = await cache.match(key);
+  if (cached) return cached;
+
+  let lastResponse;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(url, {
+      headers: {
+        "Accept": "application/json",
+        "User-Agent": "NORE-MUSIC/1.1 (https://ppequepro-cmyk.github.io/Cryp/)"
+      }
+    });
+    if (response.ok) {
+      const copy = new Response(response.body, response);
+      copy.headers.set("Cache-Control", "public, max-age=3600");
+      ctx.waitUntil(cache.put(key, copy.clone()));
+      return copy;
+    }
+    lastResponse = response;
+    if (response.status !== 503 && response.status !== 429) return response;
+
+    const retryAfter = Number(response.headers.get("Retry-After"));
+    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1000, 5000)
+      : 1500 * (attempt + 1);
+    if (attempt < 2) await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  return lastResponse;
+}
+
 function normalizeMusicText(value) {
   return String(value || "")
     .normalize("NFKD")
@@ -115,7 +147,7 @@ async function searchMusicMetadata(query, ctx) {
   params.set("query", `artist:"${terms}" OR release:"${terms}"`);
   params.set("fmt", "json");
   params.set("limit", "50");
-  const response = await cachedFetch(`https://musicbrainz.org/ws/2/release/?${params}`, ctx, 3600);
+  const response = await fetchMusicBrainz(`https://musicbrainz.org/ws/2/release/?${params}`, ctx);
   if (!response.ok) throw new Error(`MusicBrainz respondió HTTP ${response.status}`);
   const payload = await response.json();
 
