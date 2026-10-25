@@ -204,7 +204,9 @@ async function start() {
           if (!mimeType.startsWith('image/')) throw new Error('El archivo recibido no tiene un formato de imagen válido');
           image = { mimeType, base64: buffer.toString('base64') };
         }
-        let prompt = text;\n        if (isPdf) {\n          const declaredSize = Number(documentMessage.fileLength || 0);\n          if (declaredSize > 10 * 1024 * 1024) {\n            await sendText(sock, jid, msg, 'El PDF supera el límite de 10 MB.');\n            continue;\n          }\n          const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });\n          const extractedText = await readPdf(pdfBuffer);\n          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;\n        }\n        const answer = await askAI(sender || jid, prompt, name, image);
+        let prompt = text;
+        if (isPdf) {
+          const declaredSize = Number(documentMessage.fileLength || 0);\n          if (declaredSize > 10 * 1024 * 1024) {\n            await sendText(sock, jid, msg, 'El PDF supera el límite de 10 MB.');\n            continue;\n          }\n          const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });\n          const extractedText = await readPdf(pdfBuffer);\n          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;\n        }\n        const answer = await askAI(sender || jid, prompt, name, image);
         await sendText(sock, jid, msg, answer);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
