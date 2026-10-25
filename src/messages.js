@@ -20,10 +20,11 @@ export function isCreatorQuestion(text = '') {
 
 export function isBotMentioned(message = {}, text = '', botJid = '') {
   const mentioned = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-  const normalize = jid => String(jid).replace(/:\\d+@/, '@');
+  const normalize = jid => String(jid).replace(/:\d+@/, '@');
   const normalizedBot = normalize(botJid);
   const hasMention = Boolean(botJid) && mentioned.some(jid => normalize(jid) === normalizedBot);
-  return hasMention || /\b(nore|ia|bot)\b/i.test(text);
+  const hasTriggerWord = /\b(nore|ia|bot)\b/i.test(text);
+  return hasMention || hasTriggerWord;
 }
 
 export function creatorCard() {
@@ -34,5 +35,23 @@ export function creatorCard() {
     'Instagram: https://www.instagram.com/gw_emma/',
     '',
     'NORE está en su versión básica y continúa en desarrollo.'
+  ].join('\n');
+}
+
+export function helpMessage() {
+  return [
+    '📚 *NORE · AYUDA DEL SALÓN*',
+    '',
+    'Puedes escribirme normalmente para resolver dudas, estudiar o pedir explicaciones.',
+    '',
+    '*Comandos principales*',
+    '• !menu  Ver el menú de NORE',
+    '• !horario  Consultar el horario del salón',
+    '• !tareas  Consultar tareas pendientes',
+    '• !recordar  Información sobre recordatorios',
+    '• !creador  Ver información del creador',
+    '• !ayuda  Mostrar esta ayuda',
+    '',
+    'En grupos, escribe NORE, IA o bot en tu mensaje, o etiqueta la cuenta para llamar mi atención.'
   ].join('\n');
 }
