@@ -77,7 +77,10 @@ export default {
       });
 
       if (!response.ok) {
-        return json({ error: "El catálogo musical no pudo completar la búsqueda." }, 502, origin);
+        return json({
+          error: "iTunes respondió con un error.",
+          upstreamStatus: response.status
+        }, 502, origin);
       }
 
       const payload = await response.json();
@@ -97,8 +100,11 @@ export default {
       });
       ctx.waitUntil(cache.put(cacheKey, result.clone()));
       return result;
-    } catch {
-      return json({ error: "No se pudo conectar con el catálogo musical. Inténtalo de nuevo." }, 502, origin);
+    } catch (error) {
+      return json({
+        error: "El Worker no pudo completar la conexión con iTunes.",
+        detail: String(error?.message || error).slice(0, 180)
+      }, 502, origin);
     }
   }
 };
