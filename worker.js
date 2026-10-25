@@ -90,7 +90,7 @@ function trackFromItem(item) {
     id: String(item.identifier),
     title: String(item.title || item.identifier),
     artist: String(item.creator || "Artista desconocido"),
-    album: String(item.collection || ""),
+    album: String(item.album || item.collection || ""),
     duration: Number(item.runtime) || 0,
     artworkURL: `https://archive.org/services/img/${encodeURIComponent(item.identifier)}`,
     audioQuality: "STANDARD",
@@ -103,11 +103,15 @@ async function searchArchive(query, ctx) {
   // para no convertir una búsqueda normal en una consulta mal formada.
   const terms = query.normalize("NFKC").replace(/[^\p{L}\p{N} _-]/gu, " ").trim();
   const params = new URLSearchParams();
-  params.set("q", `mediatype:audio AND title:(${terms})`);
-  for (const field of ["identifier", "title", "creator", "collection", "runtime", "licenseurl"]) {
+  // Buscar por título, artista, álbum y metadatos descriptivos.
+  // Así aparecen registros aunque el artista no figure en el título.
+  const searchableFields = ["title", "creator", "album", "collection", "subject", "description", "genre"];
+  const fieldQuery = searchableFields.map(field => `${field}:(${terms})`).join(" OR ");
+  params.set("q", `mediatype:audio AND (${fieldQuery})`);
+  for (const field of ["identifier", "title", "creator", "album", "collection", "subject", "description", "genre", "date", "year", "runtime", "licenseurl"]) {
     params.append("fl[]", field);
   }
-  params.set("rows", "50");
+  params.set("rows", "100");
   params.set("page", "1");
   params.set("output", "json");
 
@@ -117,7 +121,7 @@ async function searchArchive(query, ctx) {
   const docs = payload?.response?.docs || [];
   const licensedDocs = docs
     .filter(item => safeId(String(item.identifier || "")) && licensed(item))
-    .slice(0, 20);
+    .slice(0, 60);
   return {
     docs: licensedDocs,
     totalFound: Number(payload?.response?.numFound || 0),
