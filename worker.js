@@ -229,7 +229,7 @@ export default {
       return json({
         ok: true,
         service: "NORE MUSIC API",
-        provider: "Internet Archive",
+        provider: "Internet Archive + Apple/iTunes",
         addonProtocol: "BitChord HTTP addon"
       }, 200, origin);
     }
@@ -253,12 +253,49 @@ async function searchITunesTracks(query, ctx) {
     country: "MX",
     media: "music",
     entity: "song",
-    limit: "200"
+    limit: "50"
   });
-  const response = await cachedFetch("https://itunes.apple.com/search?" + params, ctx, 1800);
-  if (!response.ok) throw new Error(`iTunes respondió HTTP ${response.status}`);
+  const apiUrl = "https://itunes.apple.com/search?" + params.toString();
+  const cache = caches.default;
+  const cacheKey = new Request(apiUrl, { method: "GET" });
+
+  // Evita repetir la misma consulta a Apple y reduce respuestas 429.
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached.json();
+
+  const response = await fetch(apiUrl, {
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "NORE-MUSIC/1.0"
+    }
+  });
+
+  if (response.status === 429) {
+    // El bloqueo temporal también se guarda para no insistir en cada búsqueda.
+    const retryAfter = response.headers.get("Retry-After") || "60";
+    const limited = new Response(JSON.stringify({
+      rateLimited: true,
+      retryAfter
+    }), {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "public, max-age=60"
+      }
+    });
+    ctx.waitUntil(cache.put(cacheKey, limited.clone()));
+    const error = new Error("iTunes está limitando temporalmente las consultas (HTTP 429). Intenta de nuevo en aproximadamente 1 minuto.");
+    error.status = 503;
+    error.retryAfter = retryAfter;
+    throw error;
+  }
+
+  if (!response.ok) {
+    throw new Error(`iTunes respondió HTTP ${response.status}`);
+  }
+
   const payload = await response.json();
-  return (payload.results || []).filter(item => item.trackId && item.trackName).map(item => ({
+  const tracks = (payload.results || []).filter(item => item.trackId && item.trackName).map(item => ({
     id: "itunes:" + item.trackId,
     title: item.trackName,
     artist: item.artistName || "Artista desconocido",
@@ -270,6 +307,15 @@ async function searchITunesTracks(query, ctx) {
     provider: "Apple/iTunes",
     storeUrl: item.trackViewUrl || item.collectionViewUrl || ""
   }));
+
+  const cachedResponse = new Response(JSON.stringify(tracks), {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "public, max-age=21600"
+    }
+  });
+  ctx.waitUntil(cache.put(cacheKey, cachedResponse.clone()));
+  return tracks;
 }
 
     if (url.pathname === "/catalog/tracks") {
@@ -278,7 +324,7 @@ async function searchITunesTracks(query, ctx) {
         const tracks = await searchITunesTracks(query, ctx);
         return json({ provider: "Apple/iTunes", tracks, totalFound: tracks.length }, 200, origin, { "Cache-Control": "public, max-age=1800" });
       } catch (error) {
-        return json({ error: "No se pudo consultar el catálogo de canciones.", detail: String(error?.message || error).slice(0, 160) }, 502, origin);
+        return json({ error: "No se pudo consultar el catálogo de canciones.", detail: String(error?.message || error).slice(0, 200), retryAfter: error?.retryAfter || null }, error?.status || 502, origin, error?.retryAfter ? { "Retry-After": String(error.retryAfter) } : {});
       }
     }
 
