@@ -5,6 +5,7 @@ import { config, isOwner } from './src/config.js';
 import { askAI } from './src/ai.js';
 import { detectMusicIntent, parsePlayCommand, getMusicReply } from './src/music.js';
 import { createPdfBuffer, readPdf } from './src/pdf.js';
+import { parseRgbCommand, runRgbAnimation } from './plugins/rgb.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
@@ -65,6 +66,11 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
       console.error('Error en .play:', error.message);
       await sendText(sock, jid, msg, 'No pude completar la búsqueda musical. Inténtalo más tarde; no enviaré audio si no puedo verificar una fuente compatible.');
     }
+    return true;
+  }
+  const rgbText = parseRgbCommand(text);
+  if (rgbText !== null) {
+    await runRgbAnimation(sock, jid, msg, rgbText);
     return true;
   }
   if (command === '.pdf' || command.startsWith('.pdf ')) {
