@@ -179,7 +179,7 @@ export default {
             }))
           }, 200, origin, { "Cache-Control": "public, max-age=300" });
         }
-        return json({ tracks }, 200, origin, { "Cache-Control": "public, max-age=300" });
+        return json({ tracks, totalFound: resultSet.totalFound, checked: resultSet.checked, licensed: tracks.length }, 200, origin, { "Cache-Control": "public, max-age=300" });
       } catch (error) {
         return json({
           error: "No se pudo consultar Internet Archive.",
