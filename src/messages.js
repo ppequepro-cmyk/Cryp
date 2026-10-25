@@ -46,6 +46,7 @@ export function helpMessage() {
     '',
     '*Comandos principales*',
     '• !menu  Ver el menú de NORE',
+    '• !musica  Buscar y reproducir música',
     '• !horario  Consultar el horario del salón',
     '• !tareas  Consultar tareas pendientes',
     '• !recordar  Información sobre recordatorios',
