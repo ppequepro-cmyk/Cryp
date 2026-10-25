@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101426">
+<title>NORE MUSIC</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d35;--line:#29385f;--text:#f4f6ff;--muted:#aab5d5;--accent:#8d9cff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#28245c 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px 60px}.brand{font-size:13px;letter-spacing:.16em;color:#aebaff}.brand b{font-size:27px;letter-spacing:-.04em;color:white}.panel{margin-top:24px;padding:22px;border:1px solid var(--line);border-radius:20px;background:#121a30}.muted{color:var(--muted)}h1{font-size:clamp(32px,8vw,48px);margin:22px 0 5px}.search{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}input{flex:1;min-width:180px;padding:14px;border-radius:12px;border:1px solid var(--line);background:#0b1225;color:white;font:inherit}button,.link{border:0;border-radius:12px;padding:13px 17px;background:linear-gradient(100deg,#78b4ff,#a28cff);color:#101426;font-weight:750;font:inherit;text-decoration:none;cursor:pointer}.player{margin-top:22px;display:none}.player iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:14px}.hint{font-size:13px;color:var(--muted);margin-top:12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.secondary{background:#202b49;color:#e8edff;border:1px solid var(--line)}footer{margin-top:30px;color:#8491b6;font-size:12px}
+</style>
+</head>
+<body><main class="wrap">
+<div class="brand">♫ <b>NORE MUSIC</b></div>
+<h1>Tu música, a un enlace de distancia.</h1>
+<p class="muted">Busca canciones en YouTube y reproduce aquí los videos oficiales o disponibles para insertar.</p>
+<section class="panel">
+<strong>Buscar una canción</strong>
+<form class="search" id="searchForm"><input id="query" type="search" placeholder="Ej. artista, canción..." autocomplete="off"><button type="submit">Buscar</button></form>
+<p class="hint">La búsqueda abre los resultados de YouTube. Elige un video y pega su enlace abajo para reproducirlo en esta página.</p>
+</section>
+<section class="panel">
+<strong>Reproducir desde un enlace de YouTube</strong>
+<form class="search" id="playForm"><input id="videoUrl" type="url" placeholder="Pega aquí el enlace del video"><button type="submit">Reproducir</button></form>
+<div class="player" id="player"><iframe id="frame" title="Reproductor de YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+<p class="hint" id="status" aria-live="polite">La reproducción depende de que el video permita inserción. NORE no descarga ni almacena canciones.</p>
+<div class="actions"><a class="link secondary" href="https://music.youtube.com/" target="_blank" rel="noopener">Abrir YouTube Music</a><a class="link secondary" href="https://open.spotify.com/" target="_blank" rel="noopener">Abrir Spotify</a></div>
+</section>
+<footer>© NORE MUSIC · Reproducción mediante el reproductor oficial de YouTube.</footer>
+</main>
+<script>
+const params=new URLSearchParams(location.search);
+const query=document.getElementById('query');
+query.value=params.get('q')||'';
+document.getElementById('searchForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ const value=query.value.trim();
+ if(!value)return;
+ window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(value),'_blank','noopener');
+});
+function extractVideoId(raw){
+ try{
+  const url=new URL(raw);
+  if(url.hostname==='youtu.be')return url.pathname.slice(1).split('/')[0];
+  if(!/(^|\\.)youtube\\.com$/.test(url.hostname))return null;
+  if(url.pathname==='/watch')return url.searchParams.get('v');
+  const match=url.pathname.match(/^\\/(?:embed|shorts)\\/([A-Za-z0-9_-]{6,})/);
+  return match?.[1]||null;
+ }catch{return null}
+}
+document.getElementById('playForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ const id=extractVideoId(document.getElementById('videoUrl').value.trim());
+ const status=document.getElementById('status');
+ if(!id){status.textContent='Enlace no válido. Usa un enlace normal de YouTube.';return}
+ document.getElementById('frame').src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);
+ document.getElementById('player').style.display='block';
+ status.textContent='Si el video permite inserción, podrás reproducirlo aquí.';
+});
+</script></body></html>
