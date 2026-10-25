@@ -4,6 +4,7 @@ import qrcode from 'qrcode-terminal';
 import { config, isOwner } from './src/config.js';
 import { askAI } from './src/ai.js';
 import { detectMusicIntent, getMusicReply } from './src/music.js';
+import { createPdfBuffer, readPdf } from './src/pdf.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
@@ -49,6 +50,20 @@ async function handleGroupMusic(sock, jid, msg, text) {
 
 async function handleCommand(sock, jid, msg, text, sender, owner) {
   const command = text.trim().toLowerCase();
+  if (command === '.pdf' || command.startsWith('.pdf ')) {
+    const content = text.trim().slice(4).trim();
+    if (!content) {
+      await sendText(sock, jid, msg, '📄 Para crear un PDF escribe .pdf seguido del texto que quieres incluir. También puedes enviarme un archivo PDF y lo leeré para resumirlo o explicarlo.');
+      return true;
+    }
+    try {
+      const buffer = await createPdfBuffer('Documento creado por NORE', content);
+      await sock.sendMessage(jid, { document: buffer, mimetype: 'application/pdf', fileName: 'documento-nore.pdf', caption: '📄 Tu PDF está listo.' }, { quoted: msg });
+    } catch (error) {
+      await sendText(sock, jid, msg, 'No pude crear el PDF: ' + error.message);
+    }
+    return true;
+  }
   if (command === '!ayuda') {
     await sendText(sock, jid, msg, helpMessage());
     return true;
@@ -187,7 +202,7 @@ async function start() {
           if (!mimeType.startsWith('image/')) throw new Error('El archivo recibido no tiene un formato de imagen válido');
           image = { mimeType, base64: buffer.toString('base64') };
         }
-        const answer = await askAI(sender || jid, text, name, image);
+        let prompt = text;\n        if (isPdf) {\n          const declaredSize = Number(documentMessage.fileLength || 0);\n          if (declaredSize > 10 * 1024 * 1024) {\n            await sendText(sock, jid, msg, 'El PDF supera el límite de 10 MB.');\n            continue;\n          }\n          const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });\n          const extractedText = await readPdf(pdfBuffer);\n          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;\n        }\n        const answer = await askAI(sender || jid, prompt, name, image);
         await sendText(sock, jid, msg, answer);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
