@@ -213,7 +213,7 @@ async function start() {
           }
           const pdfBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
           const extractedText = await readPdf(pdfBuffer);
-          prompt = `${text}\\n\\nContenido extraído del PDF:\\n${extractedText}`;
+          prompt = `${text}\n\nContenido extraído del PDF:\n${extractedText}`;
         }
         const answer = await askAI(sender || jid, prompt, name, image);
         await sendText(sock, jid, msg, answer);
