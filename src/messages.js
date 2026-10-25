@@ -32,7 +32,7 @@ export function creatorCard() {
     '👑 *CREADOR DE NORE*',
     'Nombre: Emmanuel',
     'WhatsApp: wa.me/' + (config.ownerNumber || '13202109768'),
-    'Instagram: https://www.instagram.com/gw_emma/',
+    'Instagram: https://www.instagram.com/emma.l.121?rpxt=ZHpwaTF1emZ5MDQ5',
     '',
     'NORE está en su versión básica y continúa en desarrollo.'
   ].join('\n');
