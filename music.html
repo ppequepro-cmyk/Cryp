@@ -215,8 +215,62 @@ async function searchMusicCatalog(query){
   renderCatalogResults(data.releases||[]);
  }catch(e){if(box)box.innerHTML='<p class="hint">El catálogo de álbumes no respondió. '+escapeHtml(e.message)+'</p>'}
 }
-async function searchArchive(query){const q=String(query||'').trim();if(q.length<2){setStatus('Escribe al menos dos caracteres.');return}showPage('search');$('query2').value=q;searchMusicCatalog(q);results.innerHTML='<p class="hint">Buscando en más secciones del catálogo…</p>';resultCount.textContent='';setStatus('Ampliando búsqueda en Internet Archive…');try{const words=[...new Set(q.normalize('NFKC').split(/\\s+/).map(x=>x.trim()).filter(x=>x.length>=3))];const variants=[q,...words.filter(x=>x.toLowerCase()!==q.toLowerCase()).slice(0,4)];const merged=new Map();let found=0,checked=0,success=0,lastError='';for(const term of variants){try{const response=await fetch(API_BASE+'/search?q='+encodeURIComponent(term));const data=await response.json();if(!response.ok)throw new Error(data.error||'Error al buscar.');success++;found+=Number(data.totalFound)||0;checked+=Number(data.checked)||0;for(const track of (data.tracks||[])){if(track?.id&&!merged.has(track.id))merged.set(track.id,track)}}catch(e){lastError=e.message||'Error de búsqueda'}}const tracks=[...merged.values()].slice(0,60);renderTracks(tracks);resultCount.textContent=tracks.length+' canciones';if(!success)throw new Error(lastError||'No se pudo consultar el catálogo.');setStatus(tracks.length?'Se revisaron '+success+' búsquedas relacionadas. '+tracks.length+' resultados únicos; catálogo consultado: '+found+'.':'No encontramos resultados compatibles. Prueba con el título o una palabra más corta.')}catch(e){results.innerHTML='<p class="hint">No se pudo cargar la búsqueda.</p>';setStatus(e.message||'Error de conexión con NORE MUSIC API.')}}
-async function playTrack(index){const t=queue[index];if(!t)return;currentIndex=index;setStatus('Preparando audio…');try{const res=await fetch(API_BASE+'/stream/'+encodeURIComponent(t.id));const data=await res.json();if(!res.ok||!data.url)throw Error(data.error||'No se pudo obtener el audio.');audio.src=data.url;bottomTitle.textContent=t.title;bottomArtist.textContent=t.artist||'Artista desconocido';favoriteButton.classList.toggle('saved',isFavorite(t));bottomCover.innerHTML=t.artworkURL?'<img src="'+escapeHtml(t.artworkURL)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px">':'♫';history=[t,...history.filter(x=>x.id!==t.id)].slice(0,30);save('noreMusicHistory',history);renderLibrary();renderHomeRecent();renderQueue();syncNow();await audio.play();playButton.textContent='Ⅱ';setStatus('Reproduciendo: '+t.title)}catch(e){playButton.textContent='▶';setStatus(e.message||'No se pudo reproducir esta canción.')}}
+async function searchArchive(query){
+ const q=String(query||'').trim();
+ if(q.length<2){setStatus('Escribe al menos dos caracteres.');return}
+ showPage('search');$('query2').value=q;searchMusicCatalog(q);
+ results.innerHTML='<p class="hint">Buscando en varias fuentes musicales…</p>';
+ resultCount.textContent='';setStatus('Consultando Internet Archive e iTunes…');
+ try{
+  const words=[...new Set(q.normalize('NFKC').split(/\\s+/).map(x=>x.trim()).filter(x=>x.length>=3))];
+  const variants=[q,...words.filter(x=>x.toLowerCase()!==q.toLowerCase()).slice(0,4)];
+  const merged=new Map();let found=0,checked=0,success=0,lastError='';
+  const jobs=variants.map(async term=>{
+   try{
+    const response=await fetch(API_BASE+'/search?q='+encodeURIComponent(term));
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'Internet Archive no respondió.');
+    success++;found+=Number(data.totalFound)||0;checked+=Number(data.checked)||0;
+    for(const track of(data.tracks||[])){if(track?.id&&!merged.has(track.id))merged.set(track.id,track)}
+   }catch(e){lastError=e.message||'Error de búsqueda'}
+  });
+  jobs.push((async()=>{
+   try{
+    const response=await fetch(API_BASE+'/catalog/tracks?q='+encodeURIComponent(q));
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'iTunes no respondió.');
+    success++;for(const track of(data.tracks||[])){if(track?.id&&!merged.has(track.id))merged.set(track.id,track)}
+   }catch(e){lastError=e.message||'Error del catálogo de canciones'}
+  })());
+  await Promise.all(jobs);
+  const tracks=[...merged.values()];
+  renderTracks(tracks);resultCount.textContent=tracks.length+' resultados';
+  if(!success)throw new Error(lastError||'No se pudo consultar ningún catálogo.');
+  const previews=tracks.filter(t=>t.previewOnly&&t.previewUrl).length;
+  const archive=tracks.length-previews;
+  setStatus(tracks.length?'Resultados combinados: '+tracks.length+' canciones · '+archive+' de Internet Archive · '+previews+' avances de iTunes. Revisados '+checked+' registros del archivo.':'No encontramos coincidencias. Prueba con el título o el artista.');
+ }catch(e){results.innerHTML='<p class="hint">No se pudo cargar la búsqueda.</p>';setStatus(e.message||'Error de conexión con NORE MUSIC API.')}
+}
+async function playTrack(index){
+ const t=queue[index];if(!t)return;currentIndex=index;
+ setStatus(t.previewOnly?'Preparando avance de 30 segundos…':'Preparando audio…');
+ try{
+  let mediaUrl='';
+  if(t.previewOnly){
+   if(!t.previewUrl)throw Error('Este resultado no tiene avance de audio disponible.');
+   mediaUrl=t.previewUrl;
+  }else{
+   const res=await fetch(API_BASE+'/stream/'+encodeURIComponent(t.id));
+   const data=await res.json();if(!res.ok||!data.url)throw Error(data.error||'No se pudo obtener el audio.');
+   mediaUrl=data.url;
+  }
+  audio.src=mediaUrl;bottomTitle.textContent=t.title;
+  bottomArtist.textContent=(t.artist||'Artista desconocido')+(t.previewOnly?' · Avance de 30 s':'');
+  favoriteButton.classList.toggle('saved',isFavorite(t));
+  bottomCover.innerHTML=t.artworkURL?'<img src="'+escapeHtml(t.artworkURL)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px">':'♫';
+  history=[t,...history.filter(x=>x.id!==t.id)].slice(0,30);save('noreMusicHistory',history);
+  renderLibrary();renderHomeRecent();renderQueue();syncNow();await audio.play();
+  playButton.textContent='Ⅱ';setStatus(t.previewOnly?'Reproduciendo avance de 30 segundos: '+t.title:'Reproduciendo: '+t.title);
+ }catch(e){playButton.textContent='▶';setStatus(e.message||'No se pudo reproducir esta canción.')}
+}
 function next(){if(!queue.length)return;if(repeat){playTrack(currentIndex);return}let i;if(shuffle&&queue.length>1){do{i=Math.floor(Math.random()*queue.length)}while(i===currentIndex)}else i=(currentIndex+1)%queue.length;playTrack(i)}
 $('searchForm').addEventListener('submit',e=>{e.preventDefault();searchArchive($('query').value)});
 $('searchForm2').addEventListener('submit',e=>{e.preventDefault();searchArchive($('query2').value)});
