@@ -20,8 +20,9 @@ export function isCreatorQuestion(text = '') {
 
 export function isBotMentioned(message = {}, text = '', botJid = '') {
   const mentioned = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-  const normalizedBot = String(botJid).split(':')[0];
-  const hasMention = mentioned.some(jid => String(jid).split(':')[0] === normalizedBot);
+  const normalize = jid => String(jid).replace(/:\\d+@/, '@');
+  const normalizedBot = normalize(botJid);
+  const hasMention = Boolean(botJid) && mentioned.some(jid => normalize(jid) === normalizedBot);
   return hasMention || /\b(nore|ia|bot)\b/i.test(text);
 }
 
