@@ -98,6 +98,33 @@ function trackFromItem(item) {
   };
 }
 
+async function searchMusicMetadata(query, ctx) {
+  const terms = query.normalize("NFKC").replace(/[\\\\"]/g, " ").trim();
+  const params = new URLSearchParams();
+  params.set("query", `artist:"${terms}" OR release:"${terms}" OR recording:"${terms}"`);
+  params.set("fmt", "json");
+  params.set("limit", "25");
+  const response = await cachedFetch(`https://musicbrainz.org/ws/2/release/?${params}`, ctx, 3600);
+  if (!response.ok) throw new Error(`MusicBrainz respondió HTTP ${response.status}`);
+  const payload = await response.json();
+  return (payload.releases || []).map(item => {
+    const credit = (item["artist-credit"] || []).map(part => typeof part === "string" ? part : (part.name || part.artist?.name || "")).join("");
+    const groupId = item["release-group"]?.id || "";
+    return {
+      id: item.id,
+      title: item.title || "Álbum sin título",
+      artist: credit || "Artista desconocido",
+      date: item.date || "",
+      country: item.country || "",
+      releaseGroupId: groupId,
+      artworkURL: groupId ? `https://coverartarchive.org/release-group/${groupId}/front-250` : "",
+      provider: "MusicBrainz",
+      metadataOnly: true,
+      url: `https://musicbrainz.org/release/${item.id}`
+    };
+  });
+}
+
 async function searchArchive(query, ctx) {
   // IA usa sintaxis Lucene. Evitamos comillas/paréntesis aportados por el usuario
   // para no convertir una búsqueda normal en una consulta mal formada.
@@ -162,6 +189,15 @@ export default {
     }
 
     const query = (url.searchParams.get("q") || "").trim();
+    if (url.pathname === "/catalog/search") {
+      if (query.length < 2 || query.length > 100) return json({ error: "La búsqueda debe tener entre 2 y 100 caracteres." }, 400, origin);
+      try {
+        const releases = await searchMusicMetadata(query, ctx);
+        return json({ provider: "MusicBrainz", releases }, 200, origin, { "Cache-Control": "public, max-age=3600" });
+      } catch (error) {
+        return json({ error: "No se pudo consultar el catálogo musical.", detail: String(error?.message || error).slice(0, 160) }, 502, origin);
+      }
+    }
     if (url.pathname === "/search" || url.pathname === "/api/search") {
       if (query.length < 2 || query.length > 100) {
         return json({ error: "La búsqueda debe tener entre 2 y 100 caracteres." }, 400, origin);
