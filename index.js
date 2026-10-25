@@ -32,6 +32,17 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
     await sendText(sock, jid, msg, `🌐 Menú de NORE: ${config.menuUrl}`);
     return true;
   }
+  if (command === '!musica' || command.startsWith('!musica ')) {
+    const query = text.trim().slice('!musica'.length).trim();
+    const musicUrl = new URL(config.musicUrl);
+    if (query) musicUrl.searchParams.set('q', query);
+    await sendText(sock, jid, msg, [
+      '🎵 *NORE MUSIC*',
+      query ? `Búsqueda: ${query}` : 'Busca una canción o pega un enlace de YouTube para reproducirlo.',
+      musicUrl.toString()
+    ].join('\n'));
+    return true;
+  }
   if (command === '!creador' || isCreatorQuestion(text)) {
     await sendText(sock, jid, msg, creatorCard());
     return true;
