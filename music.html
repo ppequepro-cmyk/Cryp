@@ -3,58 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101426">
+<meta name="theme-color" content="#080d1c">
+<meta name="description" content="NORE MUSIC: busca y reproduce música con el estilo de NORE.">
 <title>NORE MUSIC</title>
 <style>
-:root{color-scheme:dark;--bg:#0b1020;--panel:#151d35;--line:#29385f;--text:#f4f6ff;--muted:#aab5d5;--accent:#8d9cff}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#28245c 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px 60px}.brand{font-size:13px;letter-spacing:.16em;color:#aebaff}.brand b{font-size:27px;letter-spacing:-.04em;color:white}.panel{margin-top:24px;padding:22px;border:1px solid var(--line);border-radius:20px;background:#121a30}.muted{color:var(--muted)}h1{font-size:clamp(32px,8vw,48px);margin:22px 0 5px}.search{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}input{flex:1;min-width:180px;padding:14px;border-radius:12px;border:1px solid var(--line);background:#0b1225;color:white;font:inherit}button,.link{border:0;border-radius:12px;padding:13px 17px;background:linear-gradient(100deg,#78b4ff,#a28cff);color:#101426;font-weight:750;font:inherit;text-decoration:none;cursor:pointer}.player{margin-top:22px;display:none}.player iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:14px}.hint{font-size:13px;color:var(--muted);margin-top:12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.secondary{background:#202b49;color:#e8edff;border:1px solid var(--line)}footer{margin-top:30px;color:#8491b6;font-size:12px}
+:root{color-scheme:dark;--bg:#070b18;--panel:rgba(18,28,53,.68);--panel2:rgba(23,34,65,.82);--line:rgba(139,158,255,.2);--text:#f5f6ff;--muted:#9ba9cc;--purple:#a45cff;--pink:#f05acb;--blue:#65baff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 0%,rgba(50,69,164,.3),transparent 38%),radial-gradient(ellipse at 90% 25%,rgba(135,37,154,.2),transparent 34%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input{font:inherit}button{cursor:pointer}.app{max-width:1440px;margin:auto;min-height:100vh;display:grid;grid-template-columns:245px minmax(0,1fr);gap:22px;padding:22px}
+.glass{background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 55px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.045);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-radius:24px}
+.sidebar{height:calc(100vh - 44px);position:sticky;top:22px;padding:24px 17px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:11px;padding:5px 8px 30px}.logo{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(140deg,#8d4dff,#e45bce);box-shadow:0 0 28px #9d55ff65;font-weight:900;font-size:25px;color:white}.brand strong{display:block;font-size:19px;letter-spacing:.06em}.brand small{color:#b6a5ff;letter-spacing:.2em;font-size:10px}.nav-label{color:#69799f;font-size:10px;letter-spacing:.17em;padding:12px 12px 8px}.nav{display:grid;gap:7px}.nav button,.side-link{border:1px solid transparent;background:transparent;color:var(--muted);padding:12px 13px;text-align:left;border-radius:13px;display:flex;align-items:center;gap:12px}.nav button.active,.nav button:hover,.side-link:hover{color:white;background:linear-gradient(100deg,rgba(151,83,255,.2),rgba(93,135,255,.08));border-color:rgba(162,113,255,.24)}.ico{width:20px;text-align:center;font-size:17px}.sidebar-bottom{margin-top:auto}.profile{padding:13px;border-radius:17px;background:rgba(9,16,34,.7);display:flex;gap:10px;align-items:center}.avatar{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#6d76ff,#d74bc8);display:grid;place-items:center;font-weight:800}.profile small{display:block;color:var(--muted);font-size:11px}
+main{min-width:0;padding:5px 4px 120px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:4px 0 24px}.eyebrow{color:#b8a1ff;font-size:11px;letter-spacing:.2em;text-transform:uppercase}.top-actions{display:flex;gap:9px}.icon-btn{width:42px;height:42px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:white}.hero{position:relative;overflow:hidden;padding:34px;min-height:245px;background:linear-gradient(110deg,rgba(35,53,112,.72),rgba(53,25,86,.55)),radial-gradient(circle at 85% 45%,#b44de766,transparent 34%)}.hero:after{content:"♫";position:absolute;right:8%;top:2px;font-size:190px;line-height:1;color:#ffffff0a;transform:rotate(-15deg)}.hero h1{font-size:clamp(30px,5vw,51px);line-height:1.05;margin:12px 0 9px;letter-spacing:-.04em}.hero p{color:#c2cbe5;max-width:490px;margin:0}.searchbar{display:flex;gap:9px;max-width:630px;margin-top:22px;position:relative;z-index:1}.searchbar input,.url-form input{flex:1;min-width:0;padding:14px 16px;border-radius:14px;border:1px solid rgba(153,172,255,.28);background:rgba(5,12,29,.72);color:white;outline:none}.searchbar input:focus,.url-form input:focus{border-color:#b078ff;box-shadow:0 0 0 3px #a45cff22}.primary{border:0;border-radius:14px;padding:13px 19px;color:white;font-weight:700;background:linear-gradient(110deg,#8b52ff,#d34fc9);box-shadow:0 7px 24px #a14cff38}.section-head{display:flex;justify-content:space-between;align-items:center;margin:30px 2px 14px}.section-head h2{font-size:19px;margin:0}.subtle{color:var(--muted);font-size:12px}.text-btn{border:0;background:none;color:#c6a5ff}.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.quick{padding:17px;border-radius:19px;background:var(--panel);border:1px solid var(--line);text-align:left;color:white;min-height:105px}.quick span{font-size:22px;display:block;margin-bottom:8px}.quick small{color:var(--muted)}.content-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.75fr);gap:16px}.panel{padding:19px}.track-list{display:grid;gap:5px}.track{display:flex;align-items:center;gap:12px;padding:9px;border-radius:14px}.track:hover{background:rgba(122,145,218,.1)}.cover{width:48px;height:48px;flex:0 0 48px;border-radius:13px;display:grid;place-items:center;font-size:20px;background:linear-gradient(140deg,#253e75,#a14dba)}.cover.c2{background:linear-gradient(140deg,#124b60,#7450a8)}.cover.c3{background:linear-gradient(140deg,#63375e,#d15b86)}.cover.c4{background:linear-gradient(140deg,#274e69,#397e9b)}.track-info{min-width:0;flex:1}.track-info strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track-info small{color:var(--muted);font-size:11px}.play-small,.heart{border:1px solid var(--line);background:#172442;color:#d9c6ff;border-radius:50%;width:36px;height:36px}.heart{font-size:16px}.feature{min-height:100%;background:linear-gradient(155deg,rgba(91,56,148,.4),rgba(11,23,48,.8));display:flex;flex-direction:column;justify-content:space-between}.feature-art{aspect-ratio:1.4;border-radius:18px;background:radial-gradient(circle at 70% 25%,#e45cba,transparent 24%),radial-gradient(circle at 30% 70%,#367fd0,transparent 34%),linear-gradient(135deg,#172a58,#46205f 60%,#0e1933);display:grid;place-items:center;font-size:76px;color:#ffffffb8;text-shadow:0 0 30px #c37aff}.feature h3{margin:17px 0 2px}.url-panel{margin-top:17px}.url-form{display:flex;gap:9px;margin-top:12px}.player{display:none;margin-top:15px}.player iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:15px;background:#050914}.hint{color:var(--muted);font-size:11px;margin:10px 0 0}.page{display:none}.page.active{display:block}.library-empty{padding:28px;text-align:center;color:var(--muted)}.bottom-player{position:fixed;z-index:5;bottom:14px;left:calc(245px + 40px);right:40px;max-width:calc(1440px - 325px);margin:auto;padding:12px 17px;display:flex;align-items:center;gap:13px;background:rgba(10,17,37,.88);border:1px solid rgba(158,131,255,.3);border-radius:19px;backdrop-filter:blur(24px);box-shadow:0 10px 40px #0008}.bottom-player .cover{width:39px;height:39px;flex-basis:39px}.bottom-player .track-info{flex:1}.bottom-player button{border:0;background:transparent;color:white;font-size:18px}.bottom-player .play-main{width:39px;height:39px;border-radius:50%;background:linear-gradient(120deg,#8d50ff,#d34fc9)}.mobile-nav{display:none}
+@media(max-width:900px){.app{grid-template-columns:1fr;padding:13px}.sidebar{display:none}main{padding:0 0 120px}.bottom-player{left:13px;right:13px;bottom:76px;max-width:none}.mobile-nav{display:flex;position:fixed;z-index:6;bottom:9px;left:13px;right:13px;justify-content:space-around;padding:9px;background:rgba(10,17,37,.94);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(22px)}.mobile-nav button{border:0;background:none;color:var(--muted);font-size:11px}.mobile-nav button.active{color:#c38aff}.mobile-nav span{display:block;font-size:18px}.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.app{padding:10px}.hero{padding:24px 19px;min-height:260px}.hero:after{font-size:130px;right:1%}.searchbar,.url-form{flex-direction:column}.searchbar button,.url-form button{width:100%}.content-grid{grid-template-columns:1fr}.quick-grid{gap:9px}.quick{min-height:90px;padding:13px}.panel{padding:14px}.topbar{margin-bottom:14px}.bottom-player{padding:9px 11px}.bottom-player .track-info small{display:none}}
 </style>
 </head>
-<body><main class="wrap">
-<div class="brand">♫ <b>NORE MUSIC</b></div>
-<h1>Tu música, a un enlace de distancia.</h1>
-<p class="muted">Busca canciones en YouTube y reproduce aquí los videos oficiales o disponibles para insertar.</p>
-<section class="panel">
-<strong>Buscar una canción</strong>
-<form class="search" id="searchForm"><input id="query" type="search" placeholder="Ej. artista, canción..." autocomplete="off"><button type="submit">Buscar</button></form>
-<p class="hint">La búsqueda abre los resultados de YouTube. Elige un video y pega su enlace abajo para reproducirlo en esta página.</p>
-</section>
-<section class="panel">
-<strong>Reproducir desde un enlace de YouTube</strong>
-<form class="search" id="playForm"><input id="videoUrl" type="url" placeholder="Pega aquí el enlace del video"><button type="submit">Reproducir</button></form>
-<div class="player" id="player"><iframe id="frame" title="Reproductor de YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
-<p class="hint" id="status" aria-live="polite">La reproducción depende de que el video permita inserción. NORE no descarga ni almacena canciones.</p>
-<div class="actions"><a class="link secondary" href="https://music.youtube.com/" target="_blank" rel="noopener">Abrir YouTube Music</a><a class="link secondary" href="https://open.spotify.com/" target="_blank" rel="noopener">Abrir Spotify</a></div>
-</section>
-<footer>© NORE MUSIC · Reproducción mediante el reproductor oficial de YouTube.</footer>
+<body>
+<div class="app">
+<aside class="sidebar glass">
+ <div class="brand"><div class="logo">N</div><div><strong>NORE</strong><small>M U S I C</small></div></div>
+ <div class="nav-label">MENÚ</div>
+ <nav class="nav" aria-label="Navegación principal">
+  <button class="active" data-page="home"><span class="ico">⌂</span>Inicio</button>
+  <button data-page="search"><span class="ico">⌕</span>Buscar</button>
+  <button data-page="library"><span class="ico">▣</span>Biblioteca</button>
+  <button data-page="favorites"><span class="ico">♡</span>Favoritos</button>
+ </nav>
+ <div class="nav-label" style="margin-top:20px">TU ESPACIO</div>
+ <button class="side-link" data-page="playlists"><span class="ico">☷</span>Listas</button>
+ <div class="sidebar-bottom"><div class="profile"><div class="avatar">N</div><div><strong>NORE MUSIC</strong><small>Powered by NORE</small></div></div></div>
+</aside>
+<main>
+ <div class="topbar"><div><div class="eyebrow">Tu espacio musical</div><div class="subtle">Descubre algo que te mueva.</div></div><div class="top-actions"><button class="icon-btn" aria-label="Buscar" data-page="search">⌕</button><button class="icon-btn" aria-label="Opciones">⋯</button></div></div>
+ <section class="page active" id="home">
+  <div class="hero glass"><div class="eyebrow">♫ Bienvenido a NORE</div><h1>Tu música.<br>Tu universo.</h1><p>Busca canciones, explora tus sonidos favoritos y reproduce música desde un solo lugar.</p><form class="searchbar" id="searchForm"><input id="query" type="search" placeholder="Canciones, artistas o álbumes..." autocomplete="off"><button class="primary" type="submit">⌕ Buscar</button></form></div>
+  <div class="section-head"><h2>Explora tu música</h2><span class="subtle">NORE MUSIC</span></div>
+  <div class="quick-grid">
+   <button class="quick" data-page="favorites"><span>♡</span><strong>Favoritos</strong><br><small>Tus canciones guardadas</small></button>
+   <button class="quick" data-page="playlists"><span>☷</span><strong>Listas</strong><br><small>Organiza tus canciones</small></button>
+   <button class="quick" data-page="search"><span>♬</span><strong>Artistas</strong><br><small>Encuentra nuevos sonidos</small></button>
+   <button class="quick" data-page="search"><span>◉</span><strong>Explorar</strong><br><small>Busca en YouTube</small></button>
+  </div>
+  <div class="section-head"><h2>Para descubrir</h2><button class="text-btn" data-page="search">Ver búsqueda ↗</button></div>
+  <div class="content-grid">
+   <section class="panel glass"><div class="track-list" id="suggestions">
+    <div class="track"><div class="cover">♫</div><div class="track-info"><strong>Noche de neón</strong><small>Mix para descubrir</small></div><button class="play-small" data-search="Noche de neón mix">▶</button></div>
+    <div class="track"><div class="cover c2">✦</div><div class="track-info"><strong>Ritmo sin pausa</strong><small>Sonidos para tu día</small></div><button class="play-small" data-search="Ritmo sin pausa música">▶</button></div>
+    <div class="track"><div class="cover c3">☾</div><div class="track-info"><strong>Después de medianoche</strong><small>Selección NORE</small></div><button class="play-small" data-search="música después de medianoche">▶</button></div>
+    <div class="track"><div class="cover c4">⌁</div><div class="track-info"><strong>Frecuencia azul</strong><small>Descubre más música</small></div><button class="play-small" data-search="música chill frecuencia azul">▶</button></div>
+   </div></section>
+   <section class="panel glass feature"><div><div class="eyebrow">Reproductor web</div><div class="feature-art">N♫</div><h3>Reproduce desde YouTube</h3><p class="subtle">Pega un enlace compatible y escucha aquí mismo.</p></div><button class="primary" data-page="search">Abrir reproductor</button></section>
+  </div>
+ </section>
+ <section class="page" id="search">
+  <div class="section-head"><h2>Buscar música</h2><span class="subtle">Resultados en YouTube</span></div>
+  <section class="panel glass"><form class="searchbar" id="searchForm2"><input id="query2" type="search" placeholder="Escribe una canción o artista..." autocomplete="off"><button class="primary" type="submit">Buscar</button></form><p class="hint">La búsqueda abre YouTube en otra pestaña. Copia el enlace del video y pégalo en el reproductor de abajo.</p></section>
+  <section class="panel glass url-panel"><strong>Reproducir un enlace</strong><form class="url-form" id="playForm"><input id="videoUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." required><button class="primary" type="submit">▶ Reproducir</button></form><div class="player" id="player"><iframe id="frame" title="Reproductor de YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div><p class="hint" id="status" aria-live="polite">La reproducción depende de que el video permita inserción.</p></section>
+ </section>
+ <section class="page" id="library"><div class="section-head"><h2>Mi biblioteca</h2></div><div class="panel glass library-empty"><div style="font-size:38px">▣</div><h3>Tu biblioteca empieza aquí</h3><p>Cuando guardes favoritos o listas, aparecerán en esta sección. Por ahora puedes reproducir enlaces de YouTube.</p><button class="primary" data-page="search">Buscar música</button></div></section>
+ <section class="page" id="favorites"><div class="section-head"><h2>Favoritos</h2></div><div class="panel glass library-empty"><div style="font-size:38px">♡</div><h3>Tus favoritos</h3><p>La función para guardar canciones estará disponible cuando conectemos almacenamiento. Esta versión no inventa canciones guardadas.</p></div></section>
+ <section class="page" id="playlists"><div class="section-head"><h2>Listas de reproducción</h2></div><div class="panel glass library-empty"><div style="font-size:38px">☷</div><h3>Organiza tu música</h3><p>La interfaz de listas ya está preparada. La creación y sincronización de listas requiere una siguiente integración.</p></div></section>
 </main>
+</div>
+<div class="bottom-player glass"><div class="cover">N♫</div><div class="track-info"><strong>NORE MUSIC</strong><small>Busca y reproduce tu música</small></div><button aria-label="Anterior">|◀</button><button class="play-main" aria-label="Abrir reproductor" data-page="search">▶</button><button aria-label="Siguiente">▶|</button><button aria-label="Favoritos" data-page="favorites">♡</button></div>
+<nav class="mobile-nav" aria-label="Navegación móvil"><button class="active" data-page="home"><span>⌂</span>Inicio</button><button data-page="search"><span>⌕</span>Buscar</button><button data-page="library"><span>▣</span>Biblioteca</button><button data-page="favorites"><span>♡</span>Perfil</button></nav>
 <script>
-const params=new URLSearchParams(location.search);
-const query=document.getElementById('query');
-query.value=params.get('q')||'';
-document.getElementById('searchForm').addEventListener('submit',event=>{
- event.preventDefault();
- const value=query.value.trim();
- if(!value)return;
- window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(value),'_blank','noopener');
-});
-function extractVideoId(raw){
- try{
-  const url=new URL(raw);
-  if(url.hostname==='youtu.be')return url.pathname.slice(1).split('/')[0];
-  if(!/(^|\\.)youtube\\.com$/.test(url.hostname))return null;
-  if(url.pathname==='/watch')return url.searchParams.get('v');
-  const match=url.pathname.match(/^\\/(?:embed|shorts)\\/([A-Za-z0-9_-]{6,})/);
-  return match?.[1]||null;
- }catch{return null}
-}
-document.getElementById('playForm').addEventListener('submit',event=>{
- event.preventDefault();
- const id=extractVideoId(document.getElementById('videoUrl').value.trim());
- const status=document.getElementById('status');
- if(!id){status.textContent='Enlace no válido. Usa un enlace normal de YouTube.';return}
- document.getElementById('frame').src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);
- document.getElementById('player').style.display='block';
- status.textContent='Si el video permite inserción, podrás reproducirlo aquí.';
-});
-</script></body></html>
+const pages=[...document.querySelectorAll('.page')];
+function showPage(name){pages.forEach(p=>p.classList.toggle('active',p.id===name));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function searchYouTube(value){const q=String(value||'').trim();if(!q)return;window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank','noopener,noreferrer');}
+document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();searchYouTube(document.getElementById('query').value);});
+document.getElementById('searchForm2').addEventListener('submit',e=>{e.preventDefault();searchYouTube(document.getElementById('query2').value);});
+document.querySelectorAll('[data-search]').forEach(b=>b.addEventListener('click',()=>searchYouTube(b.dataset.search)));
+function extractVideoId(raw){try{const u=new URL(raw);if(u.hostname==='youtu.be')return u.pathname.slice(1).split('/')[0];if(!/(^|\.)youtube\.com$/.test(u.hostname)&&u.hostname!=='www.youtube-nocookie.com')return null;if(u.pathname==='/watch')return u.searchParams.get('v');const m=u.pathname.match(/^\/(?:embed|shorts)\/([A-Za-z0-9_-]{6,})/);return m?.[1]||null;}catch{return null;}}
+document.getElementById('playForm').addEventListener('submit',e=>{e.preventDefault();const id=extractVideoId(document.getElementById('videoUrl').value.trim());const status=document.getElementById('status');if(!id){status.textContent='Enlace no válido. Usa un enlace normal de YouTube.';return;}document.getElementById('frame').src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);document.getElementById('player').style.display='block';status.textContent='Si el video permite inserción, podrás reproducirlo aquí.';});
+const params=new URLSearchParams(location.search);const initialQuery=params.get('q');if(initialQuery){document.getElementById('query').value=initialQuery;document.getElementById('query2').value=initialQuery;showPage('search');}
+</script>
+</body>
+</html>
