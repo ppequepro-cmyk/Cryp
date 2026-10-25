@@ -4,8 +4,8 @@ const required = (name, fallback = '') => process.env[name]?.trim() || fallback;
 
 export const config = {
   botName: required('BOT_NAME', 'NORE'),
-  ownerNumber: required('OWNER_NUMBER').replace(/\\D/g, ''),
-  aiBaseUrl: required('AI_BASE_URL', 'https://api.groq.com/openai/v1').replace(/\\/$/, ''),
+  ownerNumber: required('OWNER_NUMBER').replace(/\D/g, ''),
+  aiBaseUrl: required('AI_BASE_URL', 'https://api.groq.com/openai/v1').replace(/\/$/, ''),
   aiApiKey: required('AI_API_KEY'),
   aiModel: required('AI_MODEL', 'openai/gpt-oss-120b'),
   maxOutputTokens: Number(process.env.MAX_OUTPUT_TOKENS || 700),
@@ -15,6 +15,6 @@ export const config = {
 };
 
 export function isOwner(jid = '') {
-  const number = String(jid).split('@')[0].replace(/\\D/g, '');
+  const number = String(jid).split('@')[0].replace(/\D/g, '');
   return Boolean(config.ownerNumber && number === config.ownerNumber);
 }
