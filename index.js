@@ -166,12 +166,29 @@ async function start() {
   sock.ev.on('group-participants.update', async update => {
     if (update.action === 'add') await welcomeParticipants(sock, update.id, update.participants);
   });
-  sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+  let startupNoticeSent = false;
+  sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       console.log('Escanea este QR desde WhatsApp > Dispositivos vinculados:');
       qrcode.generate(qr, { small: true });
     }
-    if (connection === 'open') console.log('NORE conectado a WhatsApp.');
+    if (connection === 'open') {
+      console.log('NORE conectado a WhatsApp.');
+      if (!startupNoticeSent) {
+        startupNoticeSent = true;
+        if (!config.ownerNumber) {
+          console.error('No se pudo enviar Hello World al creador: OWNER_NUMBER no está configurado.');
+        } else {
+          const ownerJid = `${config.ownerNumber}@s.whatsapp.net`;
+          try {
+            await sock.sendMessage(ownerJid, { text: 'Hello World' });
+            console.log('Prueba de conexión enviada al chat del creador.');
+          } catch (error) {
+            console.error('WhatsApp abrió la conexión, pero falló el mensaje de prueba al creador:', error.message);
+          }
+        }
+      }
+    }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       if (code !== DisconnectReason.loggedOut) {
