@@ -61,7 +61,7 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
     const query = text.trim().slice('!musica'.length).trim();
     const musicUrl = new URL(config.musicUrl);
     if (query) musicUrl.searchParams.set('q', query);
-    await sendText(sock, jid, msg, ['🎵 *NORE MUSIC*', query ? `Búsqueda: ${query}` : 'Busca una canción en el catálogo autorizado.', musicUrl.toString()].join('\\n'));
+    await sendText(sock, jid, msg, ['🎵 *NORE MUSIC*', query ? `Búsqueda: ${query}` : 'Busca una canción en el catálogo autorizado.', musicUrl.toString()].join('\n'));
     return true;
   }
   if (command === '!creador' || isCreatorQuestion(text)) {
@@ -82,7 +82,7 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
   }
   if (owner && command === '!stats') {
     const uptime = Math.floor((Date.now() - stats.startedAt) / 1000);
-    await sendText(sock, jid, msg, `📊 *NORE*\\nMensajes recibidos: ${stats.received}\\nRespuestas: ${stats.answered}\\nActivo: ${uptime}s`);
+    await sendText(sock, jid, msg, `📊 *NORE*\nMensajes recibidos: ${stats.received}\nRespuestas: ${stats.answered}\nActivo: ${uptime}s`);
     return true;
   }
   return false;
@@ -97,7 +97,7 @@ async function welcomeParticipants(sock, groupJid, participants = []) {
         const member = metadata.participants.find(item => item.id === participant);
         if (member?.notify) name = member.notify;
       } catch {}
-      const caption = `🎉 ¡Bienvenido/a a este grupo, ${name}!\\n\\nSoy NORE. Para llamarme, escribe NORE en tu mensaje o etiqueta mi cuenta. Usa !ayuda para conocer lo que puedo hacer.\\n\\n¡Que tengas una buena estancia! 💜`;
+      const caption = `🎉 ¡Bienvenido/a a este grupo, ${name}!\n\nSoy NORE. Para llamarme, escribe NORE en tu mensaje o etiqueta mi cuenta. Usa !ayuda para conocer lo que puedo hacer.\n\n¡Que tengas una buena estancia! 💜`;
       try {
         const photoUrl = await sock.profilePictureUrl(participant, 'image');
         const response = await fetch(photoUrl, { signal: AbortSignal.timeout(10000) });
@@ -106,7 +106,7 @@ async function welcomeParticipants(sock, groupJid, participants = []) {
         if (!photo.length || photo.length > 5 * 1024 * 1024) throw new Error('Foto no disponible o demasiado grande');
         await sock.sendMessage(groupJid, { image: photo, caption, mentions: [participant] });
       } catch {
-        await sock.sendMessage(groupJid, { text: `🎉 ¡Bienvenido/a @${participant.split('@')[0]}!\\n\\nSoy NORE. Escribe NORE o etiquétame para llamarme. Usa !ayuda para conocer mis funciones. 💜`, mentions: [participant] });
+        await sock.sendMessage(groupJid, { text: `🎉 ¡Bienvenido/a @${participant.split('@')[0]}!\n\nSoy NORE. Escribe NORE o etiquétame para llamarme. Usa !ayuda para conocer mis funciones. 💜`, mentions: [participant] });
       }
     } catch (error) {
       console.error('No se pudo enviar la bienvenida:', error.message);
