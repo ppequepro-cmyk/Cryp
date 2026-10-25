@@ -63,6 +63,61 @@ main{min-width:0;padding:5px 4px 120px}.topbar{display:flex;justify-content:spac
 #queueTracks .track.active{background:#a48ac522}
 #queueTracks .track.active .track-info strong{color:#d8c7f2}
 @media(max-width:760px){.now-card{padding:20px}.now-art{width:min(230px,62vw)}}
+
+/* BitChord-inspired redesign for NORE MUSIC */
+:root{--bg:#090a0c;--panel:#111216;--panel2:#17181d;--line:#292a30;--text:#f4f4f5;--muted:#92939a;--purple:#aaa1b9;--pink:#b8a6b0;--blue:#9da5ad}
+body{background:#090a0c;color:#f2f2f3}
+.app{max-width:1600px;grid-template-columns:224px minmax(0,1fr);gap:0;padding:0;min-height:100vh}
+.sidebar{height:100vh;top:0;border-radius:0;border:0;border-right:1px solid #24252a;background:#0e0f12;box-shadow:none;padding:27px 17px}
+.brand{padding:3px 8px 38px}.brand strong{font-size:18px;letter-spacing:.13em}.brand small{color:#a8a2b2}
+.nav-label{color:#70717a;font-size:9px;letter-spacing:.2em;padding:13px 12px 9px}
+.nav{gap:4px}.nav button,.side-link{border-radius:10px;padding:11px 13px;font-size:13px}
+.nav button.active,.nav button:hover,.side-link:hover{background:#222329;border-color:#303139;color:#fff}
+.nav button.active{box-shadow:inset 2px 0 #c0b4ce}
+main{padding:27px 34px 135px;max-width:1390px;width:100%;margin:0 auto}
+.topbar{margin:0 0 26px;padding-bottom:17px;border-bottom:1px solid #24252a}
+.eyebrow{color:#b8afc4;letter-spacing:.16em;font-size:10px}
+.glass,.panel,.quick,.hero,.bottom-player,.mobile-nav{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.glass{background:#111216;border:1px solid #292a30;border-radius:15px}
+.hero{min-height:275px;padding:39px 40px;border-radius:17px;background:linear-gradient(110deg,#191a20 0%,#121318 62%,#202027 100%);border:1px solid #2a2b32}
+.hero:after{right:7%;top:7px;color:#ffffff08;font-size:210px}
+.hero h1{font-size:clamp(35px,5vw,58px);letter-spacing:-.055em;font-weight:750}
+.hero p{color:#a9a9b1;font-size:14px}
+.searchbar{max-width:680px}.searchbar input,.url-form input{background:#090a0d;border:1px solid #33343b;border-radius:10px;padding:13px 15px}
+.searchbar input:focus,.url-form input:focus{border-color:#8e8799;box-shadow:0 0 0 3px #aaa1b911}
+.primary{background:#e7e5e9;color:#17171a;border:0;border-radius:9px;box-shadow:none;padding:12px 20px}
+.primary:hover{background:#fff}
+.section-head{margin:29px 2px 13px}.section-head h2{font-size:17px;font-weight:650;letter-spacing:-.02em}
+.subtle,.hint{color:#85868e}
+.quick-grid{gap:11px}.quick{min-height:94px;padding:15px 16px;border-radius:12px;background:#131419;border:1px solid #292a30;transition:background .18s,border-color .18s}
+.quick:hover{transform:none;background:#1a1b21;border-color:#46464f}
+.quick span{font-size:19px;color:#c4bdcc}.quick strong{font-size:13px}.quick small{font-size:11px}
+.content-grid{gap:14px}.panel{padding:17px;border-radius:14px;background:#111216;border-color:#292a30}
+.track{padding:9px 10px;border-radius:10px;transition:background .15s}.track:hover{transform:none;background:#202127}
+.cover{border-radius:9px;background:#292a31;color:#c8c4ce}.cover.c2,.cover.c3,.cover.c4{background:#292a31}
+.track-info strong{font-size:13px;font-weight:600}.track-info small{color:#8d8e96}
+.play-small,.heart{background:#202127;border-color:#35363d;color:#e5e3e8}
+.feature{background:#14151a}.feature-art{border-radius:13px;background:linear-gradient(145deg,#22232a,#101115);box-shadow:none}
+.feature-art:before{border-color:#c4a7f722;box-shadow:none}
+.feature-art>strong{letter-spacing:.27em}
+.bottom-player{left:calc(224px + 30px);right:30px;max-width:calc(1600px - 284px);bottom:16px;padding:12px 17px;border-radius:13px;background:#17181df2;border:1px solid #34353c;box-shadow:0 12px 40px #0009}
+.bottom-player .play-main{background:#e8e6eb;color:#151519}
+.bottom-player button{color:#d1cfd5}.bottom-player button.selected{color:#fff}
+.bottom-player #saveFavorite{color:#b8aebf}
+.progress-wrap input,.volume-control input{accent-color:#c1bacb}
+.mobile-nav{background:#14151af5;border:1px solid #34353c;border-radius:13px}
+.mobile-nav button.active{color:#fff}
+.now-playing-overlay{background:#090a0cf5}
+.now-card{background:#17181e;border:1px solid #383940;border-radius:18px}
+.now-art{border-radius:16px;background:linear-gradient(145deg,#303039,#111216);box-shadow:none}
+.now-controls .now-play{background:#e8e6eb;color:#17171a}
+.close-now{background:#1a1b20;border-color:#3a3b42}
+.text-btn{color:#c6bdcf}
+.library-empty{color:#898a92}
+@media(min-width:901px){.app{align-items:stretch}.sidebar{border-radius:0}.hero{margin-bottom:2px}}
+@media(max-width:900px){.app{display:block;padding:0}.sidebar{display:none}main{padding:17px 16px 155px}.bottom-player{left:14px;right:14px;bottom:76px;max-width:none}.mobile-nav{bottom:9px}}
+@media(max-width:620px){main{padding:12px 11px 155px}.hero{padding:25px 20px;min-height:245px}.hero h1{font-size:39px}.section-head{margin-top:23px}.quick{min-height:88px}.bottom-player{padding:9px 10px}.bottom-player .track-info small{display:block}}
+
 </style>
 </head>
 <body>
