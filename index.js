@@ -73,13 +73,13 @@ async function start() {
         await sock.sendMessage(jid, { text: `📊 *NORE*\\nMensajes recibidos: ${stats.received}\\nRespuestas: ${stats.answered}\\nActivo: ${uptime}s` }, { quoted: msg });
         continue;
       }
-      if (owner && /^!menu$/i.test(text)) {
+      if (/^(?:!menu|menu)$/i.test(text)) {
         await sock.sendMessage(jid, { text: `🌐 Menú de NORE: ${config.menuUrl}` }, { quoted: msg });
         continue;
       }
 
       // Private chat is free-form. Groups require a trigger or a mention.
-      if (group && !isBotMentioned(msg, text)) continue;
+      if (group && !isBotMentioned(msg, text, sock.user?.id)) continue;
       if (!allowedByCooldown(sender || jid)) continue;
 
       try {
