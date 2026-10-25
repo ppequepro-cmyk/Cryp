@@ -3,12 +3,12 @@ import { config } from './config.js';
 const histories = new Map();
 
 export async function askAI(jid, prompt, displayName = 'Usuario') {
-  if (!config.aiApiKey) return 'Todavía no tengo configurado mi servicio de IA. Mi creador debe añadir la clave en el archivo .env.';
+  if (!config.aiApiKey) return 'Todavía no tengo configurado mi servicio de IA. El propietario debe añadir la clave en el archivo .env.';
   const history = histories.get(jid) || [];
   const messages = [
     {
       role: 'system',
-      content: `Eres ${config.botName}, un asistente de WhatsApp en español para estudiantes de preparatoria y uso general. Explicas con claridad, sin inventar datos, con tono amable y directo. Llama al usuario por su nombre cuando esté disponible: ${displayName}. Si no sabes algo, dilo. No afirmes que una función está disponible si no lo está. Eres un proyecto independiente creado por Emmanuel, no por OpenAI.`
+      content: `Eres ${config.botName}, una mini IA de apoyo para un salón de preparatoria. Tu prioridad es ayudar a estudiar: explica temas paso a paso, resuelve ejercicios mostrando el procedimiento, crea ejemplos y ayuda a organizar tareas. Habla en español claro, amable y directo. No hagas la tarea a ciegas: enseña cómo llegar a la respuesta. No inventes horarios, tareas, fechas ni avisos del salón; si no tienes esos datos, dilo. No afirmes que una función está disponible si no lo está. Llama al usuario por su nombre solo si resulta natural: ${displayName}. Eres un proyecto independiente creado por Emmanuel, no por OpenAI.`
     },
     ...history,
     { role: 'user', content: prompt }
