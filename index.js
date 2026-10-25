@@ -3,7 +3,7 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, isOwner } from './src/config.js';
 import { askAI } from './src/ai.js';
-import { detectMusicIntent, getMusicReply } from './src/music.js';
+import { detectMusicIntent, parsePlayCommand, getMusicReply } from './src/music.js';
 import { createPdfBuffer, readPdf } from './src/pdf.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
@@ -50,6 +50,23 @@ async function handleGroupMusic(sock, jid, msg, text) {
 
 async function handleCommand(sock, jid, msg, text, sender, owner) {
   const command = text.trim().toLowerCase();
+  const play = parsePlayCommand(text);
+  if (play) {
+    try {
+      if (!allowMusicReply(jid, play.title, play.artist)) {
+        await sendText(sock, jid, msg, '⏳ Esa búsqueda ya se procesó hace poco. Espera unos minutos antes de repetirla.');
+        return true;
+      }
+      await sock.sendMessage(jid, { react: { text: '🎵', key: msg.key } });
+      const result = await getMusicReply(play);
+      await sendText(sock, jid, msg, result.text);
+      if (result.audio) await sock.sendMessage(jid, result.audio, { quoted: msg });
+    } catch (error) {
+      console.error('Error en .play:', error.message);
+      await sendText(sock, jid, msg, 'No pude completar la búsqueda musical. Inténtalo más tarde; no enviaré audio si no puedo verificar una fuente compatible.');
+    }
+    return true;
+  }
   if (command === '.pdf' || command.startsWith('.pdf ')) {
     const content = text.trim().slice(4).trim();
     if (!content) {
@@ -176,10 +193,9 @@ async function start() {
       const sender = group ? msg.key.participant : jid;
       const owner = isOwner(sender);
 
-      if (await handleCommand(sock, jid, msg, text, sender, owner)) continue;
-
-      // En grupos NORE solo actúa cuando lo llaman por nombre o lo etiquetan.
+      // En grupos, incluso los comandos requieren la palabra NORE o una mención real.
       if (group && !isBotMentioned(msg, text, sock.user?.id)) continue;
+      if (await handleCommand(sock, jid, msg, text, sender, owner)) continue;
       // La búsqueda contextual de música tampoco debe saltarse el activador del grupo.
       if (group && await handleGroupMusic(sock, jid, msg, text)) continue;
       if (!allowedByCooldown(sender || jid)) continue;
