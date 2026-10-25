@@ -17,7 +17,7 @@ export async function readPdf(buffer) {
       pages.push(content.items.map(item => item.str || '').join(' '));
     }
   } finally {
-    await pdf.destroy();
+    await loadingTask.destroy();
   }
   const text = pages.join('\n').replace(/\\u0000/g, '').trim();
   if (!text) throw new Error('No pude extraer texto. Puede ser un PDF escaneado o protegido.');
