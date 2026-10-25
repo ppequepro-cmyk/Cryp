@@ -35,7 +35,7 @@ export function creatorCard() {
     'Instagram: https://www.instagram.com/emma.l.121?rpxt=ZHpwaTF1emZ5MDQ5',
     '',
     'NORE está en su versión básica y continúa en desarrollo.'
-  ].join('\\n');
+  ].join('\n');
 }
 
 export function helpMessage() {
@@ -69,5 +69,5 @@ export function helpMessage() {
     '• !creador  Información del creador',
     '',
     '✨ NORE está en desarrollo. Te indicaré con honestidad qué funciones están activas y cuáles todavía no.'
-  ].join('\\n');
+  ].join('\n');
 }
