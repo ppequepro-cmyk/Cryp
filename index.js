@@ -28,6 +28,10 @@ function allowMusicReply(jid, title, artist) {
   return true;
 }
 
+async function sendText(sock, jid, msg, text) {
+  await sock.sendMessage(jid, { text }, { quoted: msg });
+}
+
 async function handleGroupMusic(sock, jid, msg, text) {
   const intent = detectMusicIntent(text);
   if (!intent || !allowMusicReply(jid, intent.title, intent.artist)) return false;
@@ -43,13 +47,8 @@ async function handleGroupMusic(sock, jid, msg, text) {
   return true;
 }
 
-async function sendText(sock, jid, msg, text) {
-  await sock.sendMessage(jid, { text }, { quoted: msg });
-}
-
 async function handleCommand(sock, jid, msg, text, sender, owner) {
   const command = text.trim().toLowerCase();
-
   if (command === '!ayuda') {
     await sendText(sock, jid, msg, helpMessage());
     return true;
@@ -62,11 +61,7 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
     const query = text.trim().slice('!musica'.length).trim();
     const musicUrl = new URL(config.musicUrl);
     if (query) musicUrl.searchParams.set('q', query);
-    await sendText(sock, jid, msg, [
-      '🎵 *NORE MUSIC*',
-      query ? `Búsqueda: ${query}` : 'Busca una canción o pega un enlace de YouTube para reproducirlo.',
-      musicUrl.toString()
-    ].join('\n'));
+    await sendText(sock, jid, msg, ['🎵 *NORE MUSIC*', query ? `Búsqueda: ${query}` : 'Busca una canción en el catálogo autorizado.', musicUrl.toString()].join('\\n'));
     return true;
   }
   if (command === '!creador' || isCreatorQuestion(text)) {
@@ -82,30 +77,57 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
     return true;
   }
   if (command === '!recordar') {
-    await sendText(sock, jid, msg, '⏰ La función para guardar y enviar recordatorios todavía está en desarrollo. No quiero fingir que guardé algo cuando aún no puedo hacerlo.');
+    await sendText(sock, jid, msg, '⏰ La función para guardar y enviar recordatorios todavía está en desarrollo.');
     return true;
   }
   if (owner && command === '!stats') {
     const uptime = Math.floor((Date.now() - stats.startedAt) / 1000);
-    await sendText(sock, jid, msg, `📊 *NORE*\nMensajes recibidos: ${stats.received}\nRespuestas: ${stats.answered}\nActivo: ${uptime}s`);
+    await sendText(sock, jid, msg, `📊 *NORE*\\nMensajes recibidos: ${stats.received}\\nRespuestas: ${stats.answered}\\nActivo: ${uptime}s`);
     return true;
   }
   return false;
+}
+
+async function welcomeParticipants(sock, groupJid, participants = []) {
+  for (const participant of participants) {
+    try {
+      let name = 'nuevo integrante';
+      try {
+        const metadata = await sock.groupMetadata(groupJid);
+        const member = metadata.participants.find(item => item.id === participant);
+        if (member?.notify) name = member.notify;
+      } catch {}
+      const caption = `🎉 ¡Bienvenido/a a este grupo, ${name}!\\n\\nSoy NORE. Para llamarme, escribe NORE en tu mensaje o etiqueta mi cuenta. Usa !ayuda para conocer lo que puedo hacer.\\n\\n¡Que tengas una buena estancia! 💜`;
+      try {
+        const photoUrl = await sock.profilePictureUrl(participant, 'image');
+        const response = await fetch(photoUrl, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) throw new Error('No se pudo obtener la foto de perfil');
+        const photo = Buffer.from(await response.arrayBuffer());
+        if (!photo.length || photo.length > 5 * 1024 * 1024) throw new Error('Foto no disponible o demasiado grande');
+        await sock.sendMessage(groupJid, { image: photo, caption, mentions: [participant] });
+      } catch {
+        await sock.sendMessage(groupJid, { text: `🎉 ¡Bienvenido/a @${participant.split('@')[0]}!\\n\\nSoy NORE. Escribe NORE o etiquétame para llamarme. Usa !ayuda para conocer mis funciones. 💜`, mentions: [participant] });
+      }
+    } catch (error) {
+      console.error('No se pudo enviar la bienvenida:', error.message);
+    }
+  }
 }
 
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState('auth_info');
   const { version } = await fetchLatestBaileysVersion();
   const sock = makeWASocket({
-    version,
-    auth: state,
-    logger,
+    version, auth: state, logger,
     browser: ['NORE', 'Chrome', '1.0.0'],
     markOnlineOnConnect: false,
     syncFullHistory: false
   });
 
   sock.ev.on('creds.update', saveCreds);
+  sock.ev.on('group-participants.update', async update => {
+    if (update.action === 'add') await welcomeParticipants(sock, update.id, update.participants);
+  });
   sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       console.log('Escanea este QR desde WhatsApp > Dispositivos vinculados:');
@@ -117,9 +139,7 @@ async function start() {
       if (code !== DisconnectReason.loggedOut) {
         console.log('Conexión cerrada. Reintentando...');
         setTimeout(start, 3000);
-      } else {
-        console.log('Sesión cerrada. Borra auth_info solo si quieres vincular otra cuenta.');
-      }
+      } else console.log('Sesión cerrada. Borra auth_info solo si quieres vincular otra cuenta.');
     }
   });
 
@@ -141,11 +161,10 @@ async function start() {
 
       if (await handleCommand(sock, jid, msg, text, sender, owner)) continue;
 
-      // Música contextual en grupos, sin exigir que mencionen a NORE.
-      if (group && await handleGroupMusic(sock, jid, msg, text)) continue;
-
-      // Privado: conversación libre. Grupo: solo responde si lo llaman.
+      // En grupos NORE solo actúa cuando lo llaman por nombre o lo etiquetan.
       if (group && !isBotMentioned(msg, text, sock.user?.id)) continue;
+      // La búsqueda contextual de música tampoco debe saltarse el activador del grupo.
+      if (group && await handleGroupMusic(sock, jid, msg, text)) continue;
       if (!allowedByCooldown(sender || jid)) continue;
 
       try {
@@ -158,21 +177,14 @@ async function start() {
             await sendText(sock, jid, msg, 'La imagen supera el límite de 20 MB que admite el servicio de análisis visual.');
             continue;
           }
-          const buffer = await downloadMediaMessage(msg, 'buffer', {}, {
-            logger,
-            reuploadRequest: sock.updateMediaMessage
-          });
-          if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
-            throw new Error('No se pudo descargar la imagen de WhatsApp');
-          }
+          const buffer = await downloadMediaMessage(msg, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
+          if (!Buffer.isBuffer(buffer) || buffer.length === 0) throw new Error('No se pudo descargar la imagen de WhatsApp');
           if (buffer.length > 20 * 1024 * 1024) {
             await sendText(sock, jid, msg, 'La imagen supera el límite de 20 MB que admite el servicio de análisis visual.');
             continue;
           }
           const mimeType = String(imageMessage.mimetype || 'image/jpeg').split(';')[0];
-          if (!mimeType.startsWith('image/')) {
-            throw new Error('El archivo recibido no tiene un formato de imagen válido');
-          }
+          if (!mimeType.startsWith('image/')) throw new Error('El archivo recibido no tiene un formato de imagen válido');
           image = { mimeType, base64: buffer.toString('base64') };
         }
         const answer = await askAI(sender || jid, text, name, image);
