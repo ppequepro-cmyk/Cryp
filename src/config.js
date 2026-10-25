@@ -12,6 +12,7 @@ export const config = {
   maxOutputTokens: Number(process.env.MAX_OUTPUT_TOKENS || 700),
   maxHistoryMessages: Number(process.env.MAX_HISTORY_MESSAGES || 12),
   menuUrl: required('MENU_URL', 'https://ppequepro-cmyk.github.io/Cryp/'),
+  musicUrl: required('MUSIC_URL', 'https://ppequepro-cmyk.github.io/Cryp/music.html'),
   timezone: required('TIMEZONE', 'America/Mexico_City')
 };
 
