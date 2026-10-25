@@ -29,6 +29,20 @@ export function detectMusicIntent(text = '') {
   return null;
 }
 
+
+export function parsePlayCommand(text = '') {
+  const clean = String(text).trim().replace(/^nore\\b[,:;.!?]?\\s*/i, '');
+  const match = clean.match(/^\\.play\\s+(.+)$/i);
+  if (!match) return null;
+  const query = match[1].trim();
+  const separator = query.lastIndexOf(' - ');
+  if (separator <= 0 || separator + 3 >= query.length) return null;
+  const title = query.slice(0, separator).trim();
+  const artist = query.slice(separator + 3).trim();
+  if (title.length < 1 || artist.length < 2 || title.length > 120 || artist.length > 100) return null;
+  return { title, artist, sourceText: clean };
+}
+
 async function fetchJson(url, timeoutMs = 10000) {
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
