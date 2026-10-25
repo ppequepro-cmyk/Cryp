@@ -3,10 +3,12 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, isOwner } from './src/config.js';
 import { askAI } from './src/ai.js';
+import { detectMusicIntent, getMusicReply } from './src/music.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
 const cooldowns = new Map();
+const musicCooldowns = new Map();
 const stats = { received: 0, answered: 0, startedAt: Date.now() };
 
 function allowedByCooldown(sender) {
@@ -14,6 +16,30 @@ function allowedByCooldown(sender) {
   const last = cooldowns.get(sender) || 0;
   if (now - last < 3500) return false;
   cooldowns.set(sender, now);
+  return true;
+}
+
+function allowMusicReply(jid, title, artist) {
+  const key = jid + ':' + title.toLowerCase() + ':' + artist.toLowerCase();
+  const now = Date.now();
+  const last = musicCooldowns.get(key) || 0;
+  if (now - last < 10 * 60 * 1000) return false;
+  musicCooldowns.set(key, now);
+  return true;
+}
+
+async function handleGroupMusic(sock, jid, msg, text) {
+  const intent = detectMusicIntent(text);
+  if (!intent || !allowMusicReply(jid, intent.title, intent.artist)) return false;
+  try {
+    await sock.sendMessage(jid, { react: { text: '🎵', key: msg.key } });
+    const result = await getMusicReply(intent);
+    await sendText(sock, jid, msg, result.text);
+    if (result.audio) await sock.sendMessage(jid, result.audio, { quoted: msg });
+  } catch (error) {
+    console.error('Error en NORE MUSIC:', error.message);
+    await sendText(sock, jid, msg, '🎵 Identifiqué la canción, pero no pude obtener una grabación autorizada ahora mismo.');
+  }
   return true;
 }
 
@@ -114,6 +140,9 @@ async function start() {
       const owner = isOwner(sender);
 
       if (await handleCommand(sock, jid, msg, text, sender, owner)) continue;
+
+      // Música contextual en grupos, sin exigir que mencionen a NORE.
+      if (group && await handleGroupMusic(sock, jid, msg, text)) continue;
 
       // Privado: conversación libre. Grupo: solo responde si lo llaman.
       if (group && !isBotMentioned(msg, text, sock.user?.id)) continue;
