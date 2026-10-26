@@ -8,6 +8,7 @@ import { createPdfBuffer, readPdf } from './src/pdf.js';
 import { parseRgbCommand, runRgbAnimation } from './plugins/rgb.js';
 import { parsePrivCommand, sendViewOnce } from './plugins/priv.js';
 import { parseLoadingCommand, runLoadingReply } from './plugins/carga.js';
+import { parseHackerCommand, runHackerEffect } from './plugins/hacker.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
@@ -68,6 +69,11 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
       console.error('Error en .play:', error.message);
       await sendText(sock, jid, msg, 'No pude completar la búsqueda musical. Inténtalo más tarde; no enviaré audio si no puedo verificar una fuente compatible.');
     }
+    return true;
+  }
+  const hackerText = parseHackerCommand(text);
+  if (hackerText !== null) {
+    await runHackerEffect(sock, jid, msg, hackerText);
     return true;
   }
   const rgbText = parseRgbCommand(text);
