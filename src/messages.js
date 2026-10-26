@@ -58,8 +58,8 @@ export function helpMessage() {
     '',
     '⚙️ *EFECTOS Y RESPUESTAS*',
     '• .carga pregunta  Mostrar progreso y después la respuesta de NORE IA.',
-    '• .rgb texto  Efecto de edición RGB en un solo mensaje.
-    '• .hacker texto  Efecto de terminal hacker editando el mismo mensaje.',',
+    '• .rgb texto  Efecto de edición RGB en un solo mensaje.',
+    '• .hacker texto  Efecto de terminal hacker editando el mismo mensaje.',
     '',
     '📄 *DOCUMENTOS Y ESTUDIO*',
     '• .pdf texto  Crear un documento PDF.',
