@@ -282,8 +282,7 @@ async function start() {
           const extractedText = await readPdf(pdfBuffer);
           prompt = `${text}\n\nContenido extraído del PDF:\n${extractedText}`;
         }
-        const answer = await askAI(sender || jid, prompt, name, image);
-        await sendText(sock, jid, msg, answer);
+        await runLoadingReply(sock, jid, msg, prompt, askAI, sender || jid, name, image);
         await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });
         stats.answered++;
       } catch (error) {
