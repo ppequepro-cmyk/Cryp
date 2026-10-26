@@ -5,7 +5,7 @@ export function parseLoadingCommand(text = '') {
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function runLoadingReply(sock, jid, msg, prompt, askAI, sender, name) {
+export async function runLoadingReply(sock, jid, msg, prompt, askAI, sender, name, image = null) {
   if (!prompt) return false;
   const sent = await sock.sendMessage(jid, {
     text: '▰▱▱▱▱ 0% · Preparando respuesta...'
@@ -19,7 +19,7 @@ export async function runLoadingReply(sock, jid, msg, prompt, askAI, sender, nam
   ];
 
   try {
-    const answerPromise = askAI(sender, prompt, name);
+    const answerPromise = askAI(sender, prompt, name, image);
     for (const stage of stages) {
       await wait(450);
       await sock.sendMessage(jid, { text: stage, edit: sent.key });
