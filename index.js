@@ -6,6 +6,8 @@ import { askAI } from './src/ai.js';
 import { detectMusicIntent, parsePlayCommand, getMusicReply } from './src/music.js';
 import { createPdfBuffer, readPdf } from './src/pdf.js';
 import { parseRgbCommand, runRgbAnimation } from './plugins/rgb.js';
+import { parsePrivCommand, sendViewOnce } from './plugins/priv.js';
+import { parseLoadingCommand, runLoadingReply } from './plugins/carga.js';
 import { getText, isGroup, isCreatorQuestion, isBotMentioned, creatorCard, helpMessage } from './src/messages.js';
 
 const logger = pino({ level: 'silent' });
@@ -71,6 +73,26 @@ async function handleCommand(sock, jid, msg, text, sender, owner) {
   const rgbText = parseRgbCommand(text);
   if (rgbText !== null) {
     await runRgbAnimation(sock, jid, msg, rgbText);
+    return true;
+  }
+  const privText = parsePrivCommand(text);
+  if (privText !== null) {
+    try {
+      const sentType = await sendViewOnce(sock, jid, msg, privText, downloadMediaMessage);
+      if (!sentType) await sendText(sock, jid, msg, 'Usa .priv tu mensaje o responde a una imagen con .priv para enviarla una sola vez.');
+    } catch (error) {
+      console.error('Error en .priv:', error.message);
+      await sendText(sock, jid, msg, 'No pude crear el mensaje de visualización única. Comprueba que la imagen citada siga disponible.');
+    }
+    return true;
+  }
+  const loadingPrompt = parseLoadingCommand(text);
+  if (loadingPrompt !== null) {
+    await runLoadingReply(sock, jid, msg, loadingPrompt, askAI, sender || jid, msg.pushName || 'Compañero');
+    return true;
+  }
+  if (/^\\.(?:carga|ia|preguntar)$/i.test(command)) {
+    await sendText(sock, jid, msg, 'Escribe una pregunta después del comando. Ejemplo: .carga ¿Cuál es la capital de México?');
     return true;
   }
   if (command === '.pdf' || command.startsWith('.pdf ')) {
