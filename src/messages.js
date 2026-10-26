@@ -52,6 +52,14 @@ export function helpMessage() {
     '• .play título - artista  Buscar una grabación autorizada y enviarla si está disponible.',
     '• !musica  Abrir NORE MUSIC.',
     '',
+    '🔒 *MENSAJES PRIVADOS*',
+    '• .priv texto  Enviar texto como visualización única.',
+    '• Responder a una imagen con .priv  Enviar esa imagen como visualización única.',
+    '',
+    '⚙️ *EFECTOS Y RESPUESTAS*',
+    '• .carga pregunta  Mostrar progreso y después la respuesta de NORE IA.',
+    '• .rgb texto  Efecto de edición RGB en un solo mensaje.',
+    '',
     '📄 *DOCUMENTOS Y ESTUDIO*',
     '• .pdf texto  Crear un documento PDF.',
     '• Enviar un PDF  Extraer texto para resumirlo o explicarlo. Los PDF escaneados pueden necesitar OCR.',
@@ -69,6 +77,6 @@ export function helpMessage() {
     '• !menu  Abrir la página de NORE.',
     '• !ayuda  Mostrar esta guía.',
     '',
-    'Algunas funciones de administración, moderación y stickers siguen en desarrollo. No las presentaré como activas hasta que estén conectadas y probadas.'
+    'La visualización única no impide capturas ni grabaciones externas. Las funciones de identidad de canal verificado y ubicaciones falsas no están disponibles. Algunas funciones de administración, moderación y stickers siguen en desarrollo.'
   ].join('\\n');
 }
