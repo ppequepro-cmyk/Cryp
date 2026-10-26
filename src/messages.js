@@ -58,7 +58,8 @@ export function helpMessage() {
     '',
     '⚙️ *EFECTOS Y RESPUESTAS*',
     '• .carga pregunta  Mostrar progreso y después la respuesta de NORE IA.',
-    '• .rgb texto  Efecto de edición RGB en un solo mensaje.',
+    '• .rgb texto  Efecto de edición RGB en un solo mensaje.
+    '• .hacker texto  Efecto de terminal hacker editando el mismo mensaje.',',
     '',
     '📄 *DOCUMENTOS Y ESTUDIO*',
     '• .pdf texto  Crear un documento PDF.',
@@ -78,5 +79,5 @@ export function helpMessage() {
     '• !ayuda  Mostrar esta guía.',
     '',
     'La visualización única no impide capturas ni grabaciones externas. Las funciones de identidad de canal verificado y ubicaciones falsas no están disponibles. Algunas funciones de administración, moderación y stickers siguen en desarrollo.'
-  ].join('\\n');
+  ].join('\n');
 }
